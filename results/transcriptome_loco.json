@@ -1,0 +1,109 @@
+{
+  "depth_2": {
+    "memory_depth": 2,
+    "config": {
+      "folds": 5,
+      "epochs": 600,
+      "depth": 2,
+      "l1": 0.0,
+      "rank": 64,
+      "weight_decay": 0.0001,
+      "lr": 0.0003,
+      "depth_sweep": null,
+      "wy_weight_decay": 0.0,
+      "device": "cuda",
+      "medium_kind": "present",
+      "out": "E:\\Githubs\\Ecoli\\results\\transcriptome_loco.json",
+      "n_folds_effective": 5,
+      "n_profiles": 3578,
+      "n_genes": 4096,
+      "n_conditions": 596,
+      "n_features": 603,
+      "wildtype_definition": "gp == none (broad, not the paper's)",
+      "n_wildtype": 2510
+    },
+    "all_genes": {
+      "pcc_mean": 0.186264319565669,
+      "pcc_sd": 0.10666941497785688,
+      "pcc_sem": 0.0016667096090290138,
+      "n": 4096,
+      "frac_above_0.3": 0.149658203125,
+      "frac_above_0.5": 0.004150390625,
+      "pcc_row_mean": 0.5999452150601324,
+      "pcc_row_sd": 0.13217359558924907,
+      "n_rows": 3578,
+      "rmse": 0.09626934225213453,
+      "calibration_slope": 0.9583446144677755,
+      "n_conditions_available": 596,
+      "pcc_column_suppressed": false
+    },
+    "baselines": {
+      "random": {
+        "pcc_mean": -0.10046750156822365,
+        "pcc_sd": 0.0545631600447823,
+        "pcc_sem": 0.0008525493756997235,
+        "n": 4096,
+        "frac_above_0.3": 0.0,
+        "frac_above_0.5": 0.0,
+        "pcc_row_mean": 0.5797535314483259,
+        "pcc_row_sd": 0.11814203689433407,
+        "n_rows": 3578,
+        "rmse": 0.09853239773926283,
+        "calibration_slope": 0.9858310064291219,
+        "n_conditions_available": 596,
+        "pcc_column_suppressed": false
+      },
+      "mean": {
+        "pcc_mean": -0.10588760318211576,
+        "pcc_sd": 0.052264954877342854,
+        "pcc_sem": 0.0008166399199584821,
+        "n": 4096,
+        "frac_above_0.3": 0.0,
+        "frac_above_0.5": 0.0,
+        "pcc_row_mean": 0.5799016116288179,
+        "pcc_row_sd": 0.11814818265493099,
+        "n_rows": 3578,
+        "rmse": 0.0985113003846324,
+        "calibration_slope": 0.9867680981743733,
+        "n_conditions_available": 596,
+        "pcc_column_suppressed": false
+      },
+      "wildtype": {
+        "pcc_mean": -0.10067494811026052,
+        "pcc_sd": 0.05460015298203154,
+        "pcc_sem": 0.0008531273903442428,
+        "n": 4096,
+        "frac_above_0.3": 0.0,
+        "frac_above_0.5": 0.0,
+        "pcc_row_mean": 0.5777509504314409,
+        "pcc_row_sd": 0.11203851049970896,
+        "n_rows": 3578,
+        "rmse": 0.0987957574724207,
+        "calibration_slope": 0.9789067718999809,
+        "n_conditions_available": 596,
+        "pcc_column_suppressed": false
+      }
+    },
+    "p_values": {
+      "random": 0.0,
+      "mean": 0.0,
+      "wildtype": 0.0
+    },
+    "seconds": 1807.7326228618622,
+    "tfs": {
+      "pcc_mean": 0.17634791407955488,
+      "pcc_sd": 0.10837083263368066,
+      "pcc_sem": 0.007662975063810799,
+      "n": 200,
+      "frac_above_0.3": 0.135,
+      "frac_above_0.5": 0.0,
+      "pcc_row_mean": 0.5668838676588226,
+      "pcc_row_sd": 0.14968060476724218,
+      "n_rows": 3578,
+      "rmse": 0.08699871116225165,
+      "calibration_slope": 0.933691987321011,
+      "n_conditions_available": 3578,
+      "pcc_column_suppressed": false
+    }
+  }
+}

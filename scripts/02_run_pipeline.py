@@ -138,9 +138,20 @@ def main() -> int:
     print("validation")
     print("=" * 74)
     hl = half_life_control(res.final, res.genes)
-    print(f"  half-life negative control: short={hl['mean_short']:.4f} "
-          f"long={hl['mean_long']:.4f}  P={hl['p_value']:.3f}  "
-          f"({'not significant, as in the paper' if hl['p_value'] > 0.05 else 'SIGNIFICANT -- investigate'})")
+    # A NaN P-value means the control could not RUN (too few annotated genes
+    # present), which is a different thing from the control failing. Testing
+    # `p > 0.05` alone reports NaN as "SIGNIFICANT -- investigate", i.e. it
+    # announces a normalization regression when the real problem is that the
+    # half-life gene set is missing from the matrix. Check finiteness first and
+    # surface the note the function already returns for exactly this case.
+    if not np.isfinite(hl["p_value"]):
+        print(f"  half-life negative control: NOT RUN -- "
+              f"{hl.get('note', 'no P-value')} "
+              f"(n_short={hl['n_short']}, n_long={hl['n_long']}; need >= 3 of each)")
+    else:
+        print(f"  half-life negative control: short={hl['mean_short']:.4f} "
+              f"long={hl['mean_long']:.4f}  P={hl['p_value']:.3f}  "
+              f"({'not significant, as in the paper' if hl['p_value'] > 0.05 else 'SIGNIFICANT -- investigate'})")
 
     crosschecks = {}
     if not args.no_check:
@@ -149,8 +160,14 @@ def main() -> int:
 
     out = C.RESULTS / "pipeline_output.npz"
     C.RESULTS.mkdir(parents=True, exist_ok=True)
+    # `imputed_mask` is saved because ecomics/pipeline/impute.py's caveat turns
+    # on it: a gene observed in 31% of profiles is kept and 69% of its row is
+    # invented, and the only available mitigation is letting downstream work
+    # stratify by what was real. Printing the percentage and dropping the mask
+    # left that mitigation unavailable to anything reading this file.
     np.savez_compressed(out, final=res.final, genes=np.array(res.genes),
-                        samples=np.array(res.samples), platform=res.platform)
+                        samples=np.array(res.samples), platform=res.platform,
+                        imputed_mask=res.imputed_mask)
     print(f"\nwrote {out}")
 
     val = write_validation_json(res, crosschecks, hl)

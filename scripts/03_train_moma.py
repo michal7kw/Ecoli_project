@@ -39,8 +39,16 @@ def _scalars(m: dict) -> dict:
     return {k: v for k, v in m.items() if k not in _ARRAY_KEYS}
 
 
-def load(db: Ecomics):
-    enc = build_encoder(db)
+def load(db: Ecomics, medium_kind: str = "present"):
+    """Load the transcriptome layer and its encoded conditions.
+
+    `medium_kind` is exposed because the encoder default changed on 2026-08-11
+    (240-wide medium -> the paper's 120) and the change cost real accuracy:
+    PCC/molecule 0.286 -> 0.188 under otherwise identical hyperparameters.
+    Reproducing that comparison, or separating it from the simultaneous stress
+    change, needs the flag rather than an edit. See DISCREPANCIES.md 14-17.
+    """
+    enc = build_encoder(db, medium_kind=medium_kind)
     T = db.matrix("transcriptome")
     X = enc.transform(T.condition_keys)
     Y = T.values
@@ -96,6 +104,13 @@ def main() -> int:
                          "alive (see scripts/06_recurrence_experiment.py)")
     ap.add_argument("--device", default="cpu",
                     help="torch device: cpu | cuda | cuda:N")
+    ap.add_argument("--medium-kind", default="present",
+                    choices=("present", "amount", "both"),
+                    help="medium encoding. 'present' (default, 626 features) is "
+                         "the paper's 120-wide block; 'both' (746) doubles it to "
+                         "presence AND amount. The default changed from 'both' "
+                         "on 2026-08-11 and it cost PCC/molecule 0.286 -> 0.188 "
+                         "-- use this flag to reproduce or ablate that")
     ap.add_argument("--out", type=Path, default=C.RESULTS / "transcriptome_loco.json")
     args = ap.parse_args()
 
@@ -110,7 +125,7 @@ def main() -> int:
               f"({torch.cuda.get_device_name(torch.device(args.device))})")
 
     db = Ecomics()
-    enc, T, X, Y, is_wt = load(db)
+    enc, T, X, Y, is_wt = load(db, medium_kind=args.medium_kind)
     print(f"transcriptome: {Y.shape[0]} profiles x {Y.shape[1]} genes, "
           f"{len(set(T.condition_keys))} conditions")
     print(f"input encoding: {X.shape[1]} features")

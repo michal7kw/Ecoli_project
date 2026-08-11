@@ -182,8 +182,12 @@ SUPPLEMENTARY = {
 # GO-coverage analysis and used as the prospective validation set.
 GEO_RNASEQ_SERIES = "GSE73673"
 
-# A small E. coli K-12 Affymetrix E. coli Genome 2.0 series, used to exercise
-# the CEL reader and the from-scratch RMA implementation.
+# A small E. coli K-12 Affymetrix E. coli Antisense v2 series (GPL199), used to
+# exercise the CEL reader and the from-scratch RMA implementation.
+# NOT the E. coli Genome 2.0 array (GPL3154), which this comment used to name:
+# the CDF must match the array, and GPL199's is `ecoliasv2cdf` (544 x 544 grid,
+# see scripts/00_acquire.py CDF_PKG/CDF_NCOL). Installing the Genome 2.0 CDF on
+# these files gives a probe-set mismatch, not an error.
 GEO_ARRAY_SERIES = "GSE12411"
 GEO_ARRAY_MAX_SAMPLES = 6
 
@@ -250,5 +254,18 @@ EXPECTED_OVERLAP = {
     ("transcriptome", "fluxome"): 3,
     ("transcriptome", "phenome"): 179,
     ("proteome", "metabolome"): 25,
+    # Added 2026-08-11. These three were NOT asserted before, and that is
+    # exactly why a real join bug survived: the fluxome writes perturbations as
+    # upper-case gene symbols (TALB(KO)) while every other layer writes
+    # b-numbers (b0008(KO)), so only the wild-type conditions -- the ones with
+    # no gene name to disagree about -- ever matched. The five pairs above were
+    # unaffected, so nothing failed.
+    #
+    # `db/build.py` now normalizes symbols to b-numbers via
+    # networks.gene_symbol_map(). Coverage first, fix second: an unasserted
+    # invariant is one nothing can regress against.
+    ("proteome", "fluxome"): 22,      # was 1 before normalization
+    ("metabolome", "fluxome"): 23,    # was 2
+    ("fluxome", "phenome"): 25,       # was 3
 }
 EXPECTED_T_PROFILES_WITH_PHENOME = 1991  # paper reports 1992

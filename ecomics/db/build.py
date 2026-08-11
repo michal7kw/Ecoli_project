@@ -41,6 +41,19 @@ ABSENT = {"no", "none", "na", "", "-", "?"}
 # "328mM" / "0.40%" / "100ug/mL" / "1mg/L" / "8.2 mM"
 _AMOUNT_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z%/]*)\s*$")
 
+# Two cells wrap an otherwise ordinary reading in a qualifier the regex above
+# rejects: MD065 MgSO4 "low(10nM)" and MD076 NaCl "high(0.3M)". Without this
+# they fall through to (None, None, True) -- present, amount unknown -- and the
+# encoder's `numeric()` then imputes them onto the component median, which is
+# 0.0 for 116 of the 120 components. That produced the compendium's only
+# "present at zero concentration" cells. The number is in the file; only the
+# wrapper is in the way.
+#
+# Deliberately narrow: it matches ONLY a leading word plus parentheses around
+# the whole value. A looser rule (strip anything non-numeric) would silently
+# invent readings from qualifiers that do not carry one.
+_QUALIFIED_RE = re.compile(r"^\s*[a-zA-Z]+\s*\(\s*(?P<inner>[^()]+?)\s*\)\s*$")
+
 csv.field_size_limit(1 << 31)
 
 
@@ -50,11 +63,29 @@ csv.field_size_limit(1 << 31)
 def parse_amount(raw: str | None) -> tuple[float | None, str | None, bool]:
     """Parse a medium component cell into (amount, unit, present).
 
-    The published table mixes numeric concentrations ('328mM', '0.40%'),
-    booleans ('yes', 'no'), and explicit unknowns ('?'). Rather than coercing
-    everything to a number and inventing precision, we keep the numeric reading
-    where one exists and always return a reliable `present` flag, which is what
-    the feature encoder mostly uses.
+    The published table mixes numeric concentrations ('328mM', '0.40%') with
+    explicit unknowns ('?'). Rather than coercing everything to a number and
+    inventing precision, we keep the numeric reading where one exists and
+    always return a reliable `present` flag, which is what the feature encoder
+    mostly uses.
+
+    ⚠ The boolean branch ('yes'/'y'/'present') and the 'no'/'-'/'unknown'/'na'
+    tokens are DEFENSIVE, not descriptive: counted over all 112 media, they
+    never fire. Those words live only in the six metadata columns (Link='na',
+    PMID='unknown', Defined='yes'), which MEDIUM_META excludes from `comps`
+    and load_media consumes separately. The 120 component columns contain only
+    '0' (11,725), a concentration (1,517), '?' (194), '' (2) and two malformed
+    cells. Do not read this signature as a description of the file -- an
+    earlier note did, and concluded the 'yes' branch fires twice.
+
+    The two malformed cells are MD065 MgSO4 'low(10nM)' and MD076 NaCl
+    'high(0.3M)'. Both carry a usable number that _AMOUNT_RE rejects for its
+    wrapper text. They used to fall through to (None, None, True) and then
+    impute to amount 0.0 -- the compendium's only "present at zero
+    concentration" cells. _QUALIFIED_RE now unwraps them: they read (10.0,
+    'nM', True) and (0.3, 'M', True). The presence bit is unchanged either way,
+    so this moves the 'amount'/'both' encodings only, not the 'present'
+    default.
     """
     if raw is None:
         return None, None, False
@@ -68,7 +99,48 @@ def parse_amount(raw: str | None) -> tuple[float | None, str | None, bool]:
     m = _AMOUNT_RE.match(s)
     if m:
         return float(m.group(1)), (m.group(2) or None), float(m.group(1)) != 0.0
+    q = _QUALIFIED_RE.match(s)          # 'low(10nM)' -> '10nM'
+    if q and (m := _AMOUNT_RE.match(q.group("inner"))):
+        return float(m.group(1)), (m.group(2) or None), float(m.group(1)) != 0.0
     return None, None, True             # unparseable but non-empty -> present
+
+
+def named_in_medium(component: str, base_medium: str | None,
+                    description: str | None) -> bool:
+    """Does the medium's own name announce this component?
+
+    Resolves ONE narrow case of `?`. A `?` cell means the concentration is
+    unrecorded, and `parse_amount` reads that as absent -- which is right for a
+    defined minimal medium and wrong when the medium is literally called after
+    the component. `MD094` is `LB+Fru` with `Fru = '?'`, and it was encoding as
+    plain `LB`; likewise `M9+Gal`, `M9+T`, `TPM2+Glu`.
+
+    Deliberately the CONSERVATIVE rule of the four considered. Counted over all
+    194 `?` cells in 15 media, the token is not uniform:
+
+        125  rich/complex media (dYT, TB, LB+, MOPS+CA, M63+CA, EZ)   present
+         63  DEFINED MINIMAL media (MD046 'minimal salt', MD043/MD079
+             'K') -- glucose plus salts and nothing else               ABSENT
+          5  named in the medium's own description                    present
+          1  MD100 'W2' MgSO4                                         unclear
+
+    Flipping every `?` to present -- the obvious reading of Supplementary
+    Methods 3.1.3 ("for media with casamino acids we assume that all 20 amino
+    acids are present") -- would corrupt those 63 to fix 130. Keying on
+    `medium.defined` fails too: MD022 (`MOPS+CA`) is defined=1 yet genuinely
+    contains casamino acids.
+
+    So this rule fires on 4 cells only, and leaves the amino-acid block for a
+    curated pass. It closes 2 of the 3 collision groups in
+    features.KNOWN_COLLISION_CAUSES; MD010 == MD022 stays, because "CA" does
+    not name the individual amino acids.
+
+    Token-boundary matched, so 'Glu' does not match 'Glucose' and 'T' does not
+    match 'Tet'.
+    """
+    hay = f"{base_medium or ''} {description or ''}".lower()
+    pat = r"(^|[^a-z0-9])" + re.escape(component.lower()) + r"([^a-z0-9]|$)"
+    return re.search(pat, hay) is not None
 
 
 def _num(v) -> float | None:
@@ -91,6 +163,36 @@ class Builder:
         self._cond_id: dict[ConditionKey, int] = {}
         self._next_profile = 1
         self.stats: dict[str, int] = {}
+        self._gene_map = self._load_gene_map()
+
+    @staticmethod
+    def _load_gene_map() -> dict[str, str]:
+        """Gene symbol -> b-number, for canonicalizing perturbation names.
+
+        The fluxome writes `TALB(KO)` where every other layer writes
+        `b0008(KO)` -- the same knockout. Unreconciled, that is 23 duplicate
+        feature columns AND three cross-layer joins that silently return almost
+        nothing: proteome/metabolome/phenome against fluxome were 1, 2 and 3
+        conditions where the data supports 22, 23 and 25.
+
+        ASSERTED non-empty on purpose. `networks.gene_symbol_map()` returns an
+        empty dict when its KEGG file is missing, and an empty map here would
+        silently produce DIFFERENT condition keys -- a build whose join surface
+        depends on whether an untracked file happens to exist. Failing loudly
+        is the whole point; see canon.normalize_gene.
+        """
+        from ecomics.networks import gene_symbol_map
+
+        m = {k.lower(): v for k, v in gene_symbol_map().items()}
+        if not m:
+            raise RuntimeError(
+                "gene_symbol_map() is empty -- "
+                f"{C.REMOTE_FILES.get('kegg_gene_list')} is missing.\n"
+                "Condition keys depend on it (fluxome writes gene SYMBOLS, every "
+                "other layer writes b-numbers), so building without it would "
+                "produce a database that silently fails to join.\n"
+                "Run: python scripts/00_acquire.py")
+        return m
 
     def log(self, msg: str) -> None:
         if self.verbose:
@@ -122,7 +224,7 @@ class Builder:
         )
         cid = cur.lastrowid
         self._cond_id[key] = cid
-        for p in split_gp(key.gp):
+        for p in split_gp(key.gp, self._gene_map):
             self.conn.execute(
                 "INSERT OR IGNORE INTO perturbation (id, gene, type) VALUES (?,?,?)",
                 (p.as_str(), p.gene, p.type))
@@ -174,6 +276,12 @@ class Builder:
             rows = []
             for cname in comps:
                 amount, unit, present = parse_amount(r.get(cname))
+                # '?' means unrecorded, not absent, when the medium is named
+                # after the component -- see named_in_medium.
+                if (not present and str(r.get(cname)).strip() == "?"
+                        and named_in_medium(cname, r.get("Base Medium"),
+                                            r.get("Description"))):
+                    present = True
                 rows.append((r.get("ID"), cname, r.get(cname), amount, unit,
                              int(present)))
             self.conn.executemany(
@@ -208,7 +316,7 @@ class Builder:
             rows: list[np.ndarray] = []
             batch: list[tuple] = []
             for row in reader:
-                key = parse_transcriptome_cond(row[1])
+                key = parse_transcriptome_cond(row[1], self._gene_map)
                 cid = self.condition_id(key)
                 pid = self.add_profile("transcriptome", cid, row[0], averaged=False)
                 pids.append(pid)
@@ -243,7 +351,7 @@ class Builder:
             mols = [h[2:] for h in header[5:]]
             pids, rows, batch = [], [], []
             for row in reader:
-                key = make_key(row[0], row[1], row[3], row[4])
+                key = make_key(row[0], row[1], row[3], row[4], self._gene_map)
                 cid = self.condition_id(key)
                 pid = self.add_profile(layer, cid, None, averaged=True)
                 pids.append(pid)
@@ -280,7 +388,8 @@ class Builder:
 
         pids, rows, batch = [], [], []
         for r in recs:
-            key = make_key(r["Strain"], r["MediumID"], r["Stress"], r["GP"])
+            key = make_key(r["Strain"], r["MediumID"], r["Stress"], r["GP"],
+                           self._gene_map)
             cid = self.condition_id(key)
             pid = self.add_profile("fluxome", cid, None, averaged=True)
             pids.append(pid)
@@ -300,7 +409,8 @@ class Builder:
         recs = json.loads((C.PROK_DIR / "phenome.json").read_text(encoding="utf-8"))
         pids, rows = [], []
         for r in recs:
-            key = make_key(r["Strain"], r["MediumID"], r["Stress"], r["GP"])
+            key = make_key(r["Strain"], r["MediumID"], r["Stress"], r["GP"],
+                           self._gene_map)
             cid = self.condition_id(key)
             pid = self.add_profile("phenome", cid, None, averaged=True)
             pids.append(pid)
