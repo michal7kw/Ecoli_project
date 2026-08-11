@@ -1,0 +1,105 @@
+{
+ "platforms": {
+  "affy_ecoliasv2": 6,
+  "rnaseq_gse73673": 87
+ },
+ "n_cel": 6,
+ "n_htseq": 87,
+ "n_genes": 4069,
+ "crosschecks": {
+  "quantile normalization": {
+   "pcc": 0.9999999999999998,
+   "reference": "preprocessCore::normalize.quantiles",
+   "note": "deterministic \u2014 anything below 1.0 would be a bug",
+   "detail": {
+    "pcc": 0.9999999999999998,
+    "max_abs_diff": 2.842170943040401e-14
+   }
+  },
+  "k-NN imputation (k=3)": {
+   "pcc": 0.9953744396479389,
+   "reference": "impute::impute.knn",
+   "note": "on imputed cells; a different neighbour scheme, so <1 is expected",
+   "detail": {
+    "pcc_imputed_only": 0.9953744396479389,
+    "pcc_overall": 0.9996152680471323,
+    "n_imputed": 553
+   }
+  },
+  "RMA from scratch": {
+   "pcc": 0.9998974551088751,
+   "reference": "affy::rma",
+   "note": "residual is grid discretization in the mode estimate",
+   "detail": {
+    "n_probesets": 7312,
+    "pcc": 0.9998974551088751,
+    "rmse": 0.027058085209071055,
+    "mean_abs_diff": 0.016742644618866428
+   }
+  }
+ },
+ "cascade": [
+  {
+   "step": "0. input",
+   "shape": "4069x93",
+   "median": 5.918087093535437,
+   "q1": 3.8813395217416997,
+   "q3": 7.264872318679799,
+   "missing": 0.0
+  },
+  {
+   "step": "1b. noise removed",
+   "shape": "4069x93",
+   "median": 5.111954733159881,
+   "q1": 1.823321222416848,
+   "q3": 6.868966516857232,
+   "missing": 0.0
+  },
+  {
+   "step": "2. platform-corrected",
+   "shape": "4069x93",
+   "median": -0.10019046608300243,
+   "q1": -0.7932666311481661,
+   "q3": 0.6571577682602554,
+   "missing": 0.0
+  },
+  {
+   "step": "3. absolute (log10 copies)",
+   "shape": "4069x93",
+   "median": 1.9075797404358605,
+   "q1": 1.2826119520759598,
+   "q3": 2.517590560382913,
+   "missing": 0.0
+  },
+  {
+   "step": "4. filtered + imputed",
+   "shape": "4069x93",
+   "median": 1.9075797404358605,
+   "q1": 1.2826119520759598,
+   "q3": 2.517590560382913,
+   "missing": 0.0
+  }
+ ],
+ "half_life_control": {
+  "n_short": 21,
+  "n_long": 21,
+  "mean_short": 0.6276896648676376,
+  "sem_short": 0.036877087907832264,
+  "mean_long": 0.637508790246532,
+  "sem_long": 0.04505293354945331,
+  "statistic": -0.465381193343544,
+  "p_value": 0.64165849961249,
+  "n_excluded_ambiguous": 3,
+  "excluded_ambiguous": [
+   "b0720",
+   "b1136",
+   "b2296"
+  ],
+  "paper": {
+   "mean_short": 0.573,
+   "mean_long": 0.572,
+   "p_value": 0.41
+  }
+ },
+ "synthetic_reference_warning": "step 3 uses a SYNTHETIC reference unless real copy numbers were supplied; Taniguchi et al. 2010 is not redistributable"
+}

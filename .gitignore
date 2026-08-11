@@ -1,0 +1,63 @@
+# --------------------------------------------------------------------------
+# Data (872 MB) -- deliberately NOT tracked.
+#
+# Everything under data/ is either a user-supplied input or a derived artefact
+# that scripts/00_acquire.py and scripts/01_build_db.py rebuild from scratch:
+#
+#   Ecomics.*.{txt,csv}   the published release (259 MB), from the Ecomics
+#                         Dropbox linked at http://prokaryomics.com/download
+#   external/             scraped + downloaded resources (189 MB)
+#   ecomics.db            the built SQLite compendium (347 MB)
+#   parquet/              wide matrices mirrored for fast loading (78 MB)
+# --------------------------------------------------------------------------
+data/
+data.zip
+
+# Large or regenerable outputs. The reproduction table and per-layer metrics
+# ARE tracked -- they are the result of record.
+results/*.npz
+results/*.log
+results/*.png
+
+# --------------------------------------------------------------------------
+# In the working
+# Code not reachable from scripts/ -- kept locally, not published.
+#
+#   plots.py, figures/   the figure atlas. Its own entry point,
+#                        scripts/15_figures.py, was never written, so the
+#                        registry has no caller. ~2,375 lines.
+#   moma/{_lasso,fluxome,metabolome,phenome,proteome}.py
+#                        the four omics layers beyond the transcriptome, i.e.
+#                        the rest of the paper's cascade. scripts/03 imports
+#                        only TranscriptomeModule. ~1,607 lines.
+#
+# moma/__init__.py stays tracked: it re-exports only transcriptome, and Python
+# executes it on any `ecomics.moma.*` import.
+#
+# --------------------------------------------------------------------------
+ecomics/plots.py
+ecomics/figures/
+ecomics/moma/_lasso.py
+ecomics/moma/fluxome.py
+ecomics/moma/metabolome.py
+ecomics/moma/phenome.py
+ecomics/moma/proteome.py
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+venv/
+.venv/
+
+# R
+.Rhistory
+.RData
+
+# Editors / OS
+.vscode/
+.obsidian/
+.DS_Store
+Thumbs.db
