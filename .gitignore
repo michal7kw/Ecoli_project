@@ -62,3 +62,4 @@ venv/
 .DS_Store
 Thumbs.db
 INFO-CARD.md
+docs/04-reproduce.md

@@ -10,6 +10,11 @@
 Conditions, not profiles, are held out: Ecomics averages 6.0 replicate profiles
 per condition, so a random split lets a model score well by recognising a
 condition's own replicates. See ecomics/evaluate.py.
+
+Writes two things: the metrics to `--out`, and, for a single-depth run, the
+out-of-fold predictions to `results/transcriptome_predictions.npz`. The second
+is what lets `08_methods_faithful_eval.py` re-score this run on the paper's own
+axis without refitting the model.
 """
 
 from __future__ import annotations
@@ -192,6 +197,33 @@ def main() -> int:
                   f"{C.PAPER['pcc_transcriptome_tf'][1]})")
             entry["tfs"] = _scalars(tf_m)
         results[f"depth_{depth}"] = entry
+
+        # Cache the out-of-fold predictions themselves, not just the metrics
+        # summarized above. `08_methods_faithful_eval.py` re-scores these SAME
+        # predictions on the paper's axis (per condition, against the
+        # condition-averaged truth, per-gene min-max), and `run_loco` has
+        # already computed everything it needs. Without this the paper-axis
+        # evaluation costs a second full LOCO fit of an identical model --
+        # which is precisely what `07_baseline_calibration.py:refit` was doing.
+        #
+        # The baselines travel too: `figures/fig_transcriptome.py` reads
+        # `baseline_mean` / `baseline_wildtype`, so a file missing them would
+        # break two figures. (08 does NOT read them -- it recomputes all three
+        # under the paper's protocol, which is the whole point of that script.)
+        #
+        # Single-depth runs only. Under `--depth-sweep` there is no one
+        # prediction set, and quietly keeping the last depth's is how
+        # `fig_transcriptome.py:NPZ_RUN` came to need a paragraph explaining
+        # which run its npz actually held. `source_json` puts that provenance
+        # inside the file so the question cannot arise again.
+        if len(depths) == 1:
+            cache = C.RESULTS / "transcriptome_predictions.npz"
+            np.savez_compressed(
+                cache, y_true=res.y_true, y_pred=res.y_pred,
+                condition_keys=res.condition_keys,
+                source_json=str(args.out.name),
+                **{f"baseline_{k}": v for k, v in res.baseline_pred.items()})
+            print(f"  cached out-of-fold predictions -> {cache}")
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(results, indent=2, default=float),
