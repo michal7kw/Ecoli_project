@@ -1,7 +1,7 @@
 
 # 08 - `08_methods_faithful_eval.py` - the paper's own protocol
 
-**Layer:** transcriptome. **Reads:** `results/transcriptome_predictions.npz`, Supplementary Data 1. **Writes:** [`results/methods_faithful_eval.json`](../../results/methods_faithful_eval.json).
+**Layer:** transcriptome. **Reads:** `results/transcriptome_predictions.npz`, Supplementary Data 1. **Writes:** [`results/methods_faithful_eval.json`](../results/methods_faithful_eval.json).
 
 ---
 
@@ -37,9 +37,9 @@ python scripts/08_methods_faithful_eval.py
 
 | Input                                                              | Supplied by              | Hard requirement?                                           |
 | ------------------------------------------------------------------ | ------------------------ | ----------------------------------------------------------- |
-| `results/transcriptome_predictions.npz`                            | [`03`](docs/scripts/03-train-moma.md) | **yes**                                                     |
-| Supplementary Data 1, sheet `Transcriptome`, column `Growth Phase` | [`00`](00-acquire.md)    | **yes** — the subset filter is unreconstructable without it |
-| `data/prokaryomics/medium.json`                                    | [`00`](00-acquire.md)    | for the LB/M9 medium IDs in the wild-type definition        |
+| `results/transcriptome_predictions.npz`                            | [`03`](03-train-moma.md) | **yes**                                                     |
+| Supplementary Data 1, sheet `Transcriptome`, column `Growth Phase` | `scripts/00_acquire.py`  | **yes** — the subset filter is unreconstructable without it |
+| `data/prokaryomics/medium.json`                                    | `scripts/00_acquire.py`  | for the LB/M9 medium IDs in the wild-type definition        |
 
 ## 8.5 Results
 
@@ -47,15 +47,15 @@ python scripts/08_methods_faithful_eval.py
 
 Applying the exponential-phase filter gives **2,610 profiles over 493 conditions** — the paper's own stated numbers, to the profile.
 
-### The model reproduces, and slightly exceeds
+### The model reproduces
 
 | | Ours | Paper |
 |---|---|---|
-| **MOMA** | **0.578 ± 0.211** | 0.54 ± 0.15 |
+| **MOMA** | **0.544 ± 0.165** | 0.54 ± 0.15 |
 | random | 0.528 | 0.25 |
 | mean | 0.529 | 0.26 |
 | wild type | 0.514 | 0.36 |
-| **model − baseline** | **0.049** | **0.280** |
-| TFs (MOMA) | 0.580 | 0.68 |
+| **model − baseline** | **0.015** | **0.280** |
+| TFs (MOMA) | 0.550 | 0.68 |
 
-🔴 **What remains open is the baseline level, not the model.** Baselines land near 0.53 where the paper reports 0.25/0.26/0.36, so margin over baseline is **0.049 against the paper's 0.280**.
+🔴 **What remains open is the baseline level, not the model.** Baselines land near 0.53 where the paper reports 0.25/0.26/0.36, so the margin over baseline is **0.015 against the paper's 0.280**. A baseline has no free parameters, so that gap cannot be a modelling difference — it has to be a difference in what the baseline is computed over.

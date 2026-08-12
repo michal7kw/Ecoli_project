@@ -2,12 +2,12 @@
 # 03 - `03_train_moma.py` - the transcriptome module
 
 **Layer:** transcriptome. 
-**Reads:** `data/parquet/transcriptome.parquet` via [`ecomics/db/api.py`](../../ecomics/db/api.py). 
-**Writes:** [`results/transcriptome_loco.json`](../../results/transcriptome_loco.json) and `results/transcriptome_predictions.npz`
+**Reads:** `data/parquet/transcriptome.parquet` via [`ecomics/db/api.py`](../ecomics/db/api.py). 
+**Writes:** [`results/transcriptome_loco.json`](../results/transcriptome_loco.json) and `results/transcriptome_predictions.npz`
 
 Trains MOMA's relaxation RNN — the only one of the five modules with enough data to be trained at all — and evaluates it by leave-one-**condition**-out cross-validation against the paper's three baselines.
 
-> ⚠ **The headline this script prints is not comparable to the paper's headline.** `03` reports PCC **per molecule across conditions**; the paper reports PCC **per profile across molecules**, under a further three protocol choices. For the like-for-like number, run [`08`](docs/scripts/08-methods-faithful-eval.md). Nothing about the model differs between them.
+> ⚠ **The headline this script prints is not comparable to the paper's headline.** `03` reports PCC **per molecule across conditions**; the paper reports PCC **per profile across molecules**, under a further three protocol choices. For the like-for-like number, run [`08`](08-methods-faithful-eval.md). Nothing about the model differs between them.
 
 ---
 
@@ -54,9 +54,9 @@ Evaluation runs through `ecomics/evaluate.py:run_loco`, which is the same contra
 
 | Input | Supplied by | Used for |
 |---|---|---|
-| `data/parquet/transcriptome.parquet` | [`01`](docs/scripts/01-build-db.md) | 3,578 profiles × 4,096 genes over 596 conditions |
-| the condition ontology in `data/ecomics.db` | [`01`](docs/scripts/01-build-db.md) | `ecomics/features.py:build_encoder` → the 603-feature input vector |
-| `C.REMOTE_FILES["regulondb_tf_gene"]` | [`00`](00-acquire.md) | the TF subset the paper reports separately (200 TFs here) |
+| `data/parquet/transcriptome.parquet` | [`01`](01-build-db.md) | 3,578 profiles × 4,096 genes over 596 conditions |
+| the condition ontology in `data/ecomics.db` | [`01`](01-build-db.md) | `ecomics/features.py:build_encoder` → the 603-feature input vector |
+| `C.REMOTE_FILES["regulondb_tf_gene"]` | `scripts/00_acquire.py` | the TF subset the paper reports separately (200 TFs here) |
 
 If the RegulonDB file is absent, `tf_indices` returns an empty array and the `tfs` block is simply omitted from the output rather than failing the run.
 
@@ -90,15 +90,15 @@ Every metric block — `all_genes`, each baseline, `tfs` — has the same shape:
 
 ## 3.5 Results
 
-From [`results/transcriptome_loco.json`](../../results/transcriptome_loco.json), depth 2, 5-fold grouped LOCO, `lr=3e-4`, `rank=64`, `wy_weight_decay=0`:
+From [`results/transcriptome_loco.json`](../results/transcriptome_loco.json), depth 2, 5-fold grouped LOCO, `lr=3e-4`, `rank=64`, `wy_weight_decay=0`:
 
 | Predictor | PCC / molecule | > 0.3 | PCC / profile | RMSE | p |
 |---|---|---|---|---|---|
-| **MOMA transcriptome** | **0.286 ± 0.124** | 41.6% | 0.641 | 0.095 | — |
-| baseline: random | −0.100 | 0.0% | 0.580 | 0.101 | 0.0 |
+| **MOMA transcriptome** | **0.186 ± 0.107** | 15.0% | 0.600 | 0.096 | — |
+| baseline: random | −0.100 | 0.0% | 0.580 | 0.099 | 0.0 |
 | baseline: mean | −0.106 | 0.0% | 0.580 | 0.099 | 0.0 |
 | baseline: wildtype | −0.101 | 0.0% | 0.578 | 0.099 | 0.0 |
-| 200 transcription factors | 0.278 ± 0.120 | 39.5% | 0.616 | 0.086 | — |
+| 200 transcription factors | 0.176 ± 0.108 | 13.5% | 0.567 | 0.087 | — |
 
 **The baselines are the thing to look at.** On the per-molecule axis a condition-blind predictor scores ≈ 0 by construction, so all three land slightly negative and no representation choice can inflate the model's margin. That is exactly why this axis is the repo's primary one. It is also why these baselines cannot be compared to the paper's positive 0.25 / 0.26 / 0.36 — those must be on the other axis.
 
@@ -106,18 +106,27 @@ From [`results/transcriptome_loco.json`](../../results/transcriptome_loco.json),
 
 | | Ours | Paper | |
 |---|---|---|---|
-| PCC, all genes | 0.286 per molecule | 0.54 ± 0.15 | **not comparable** — different axes |
-| PCC, all genes, paper's protocol | **0.578** ([`08`](docs/scripts/08-methods-faithful-eval.md)) | 0.54 ± 0.15 | 🟢 reproduces, slightly exceeds |
-| PCC, TFs | 0.278 per molecule / 0.580 paper-protocol | 0.68 ± 0.14 | 🔴 the +0.14 TF advantage does not appear ([`10`](10-trn-seeded-recurrence.md)) |
-| optimal memory depth | knee at 2, maximum at 8 | 2 | 🟡 depends on the criterion |
+| PCC, all genes | 0.186 per molecule | 0.54 ± 0.15 | **not comparable** — different axes |
+| PCC, all genes, paper's protocol | **0.544 ± 0.165** ([`08`](08-methods-faithful-eval.md)) | 0.54 ± 0.15 | 🟢 reproduces |
+| PCC, TFs | 0.176 per molecule / 0.550 paper-protocol | 0.68 ± 0.14 | 🔴 the +0.14 TF advantage does not appear |
+| optimal memory depth | knee at 2, plateau by 3 | 2 | 🟡 depends on the criterion |
+
+Every number in the two tables above comes from `results/transcriptome_loco.json` and `results/methods_faithful_eval.json` in this repository. If they disagree, the JSON is right.
 
 ### The depth curve
 
-`--depth-sweep 1,2,3,4,5,6,8`, from `depth_sweep_loco.json` and `depth_{5,6,8}_loco.json`:
+`python scripts/03_train_moma.py --depth-sweep 1,2,3,4 --out results/depth_sweep_loco.json`, from [`results/depth_sweep_loco.json`](../results/depth_sweep_loco.json) — same configuration as §3.5, so these are directly comparable with the table above:
 
-| depth | 1 | 2 | 3 | 4 | 5 | 6 | 8 |
-|---|---|---|---|---|---|---|---|
-| PCC / molecule | 0.234 | **0.295** | 0.301 | 0.307 | 0.308 | 0.318 | **0.319** |
-| genes > 0.3 | 27.2% | 44.2% | 47.1% | 48.5% | 47.6% | 51.5% | 52.1% |
+| depth              | 1     | 2         | 3      | 4      |
+| ------------------ | ----- | --------- | ------ | ------ |
+| PCC / molecule     | 0.042 | **0.186** | 0.225  | 0.227  |
+| genes > 0.3        | 1.9%  | 15.0%     | 25.4%  | 25.6%  |
+| PCC / profile      | 0.591 | 0.600     | 0.612  | 0.610  |
 
-Depth 2 captures **72% of the total gain** available up to depth 8, so it is a defensible knee — but it is not a maximum, and accuracy is still rising at 8. The paper reports 2 as optimal.
+Depth 2 captures **78% of the gain available up to depth 4**, and depth 3 captures **99%** — after which the curve is flat, 3 → 4 adding only +0.002. So depth 2 is a defensible **knee**.
+
+Two things are worth stating precisely, because they are easy to overstate.
+
+- **Depth 1 collapses.** At 0.042 the model is barely better than the condition-blind baselines (≈ −0.10). The recurrence is not a refinement here; without at least one relaxation step the architecture does not work at all.
+
+> ⚠ **A sweep needs an explicit `--out`.** `--out` defaults to `results/transcriptome_loco.json`, and a sweep writes one block per depth, so running it without `--out` overwrites the single-depth result of record with a differently-shaped file. The prediction cache is safe — `03` only writes the npz when exactly one depth was requested.

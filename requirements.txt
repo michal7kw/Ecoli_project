@@ -1,36 +1,28 @@
 # Core
 numpy>=1.24
 scipy>=1.10
-scikit-learn>=1.3
+scikit-learn>=1.3    # LASSO, for the proteome module's four network predictors
 pandas>=2.0
 pyarrow>=12.0        # Parquet mirrors of the wide matrices
 
-# The paper's five Supplementary Data files ship as .xlsx and are read directly:
-# fluxome.load_paper_medium_bounds (Data 4), metabolome + transcriptome (Data 2's
-# TRN), scripts/09 and scripts/11. `pandas.read_excel` in scripts/08 and 10 also
-# dispatches to it. Required by the MAIN chain, not just the investigations --
-# scripts/04_reproduce.py aborts in eval_fluxome without it.
+# The paper's Supplementary Data files ship as .xlsx and are read directly.
+# `pandas.read_excel` dispatches to openpyxl in scripts/08_methods_faithful_eval.py,
+# which needs Supplementary Data 1's `Growth Phase` column to build the paper's
+# exponential-phase subset. Required by the chain, not optional.
 openpyxl>=3.1
 
-# Transcriptome module (relaxation RNN) -- the only torch user in the repo.
+# Transcriptome module (relaxation RNN) -- the only torch user here.
 # A CPU build runs everything; only `scripts/03_train_moma.py --device cuda` needs CUDA.
 # On Linux the default wheel below already bundles CUDA. On WINDOWS it does not, and
 # `torch.cuda.is_available()` is False even with a working driver -- install instead from
 #   pip install torch --index-url https://download.pytorch.org/whl/cu130
-# and confirm the build tag reads `2.13.0+cu130`, not `2.13.0`. See
-# docs/implementation/19-runbook-and-extending.md 19.7.
+# and confirm the build tag reads `2.13.0+cu130`, not `2.13.0`.
 torch>=2.0
 
-# Optional, and genuinely optional: the plots in docs/examples/*.py --plot, and
-# the figure atlas (ecomics/plots.py + ecomics/figures/, driven by
-# scripts/15_figures.py). Nothing in the 00 -> 01 -> (02|03|04) chain imports it,
-# ecomics/plots.py raises a message naming this install line if it is missing,
-# and tests/test_plots.py skips wholesale via importorskip.
-matplotlib>=3.7
-
 # Deliberately NOT required:
-#   requests  -- urllib handles the four GETs in acquire/ perfectly well
-#   cobra     -- FBA is solved directly with scipy.optimize.linprog (HiGHS)
+#   matplotlib  -- nothing published here imports it. The figure atlas that would
+#                  (ecomics/plots.py, ecomics/figures/) is not part of this subset.
+#   requests    -- urllib handles the four GETs in acquire/ perfectly well
 #   statsmodels -- loess is implemented in pipeline/platform.py
 #
 # R/Bioconductor (affy, preprocessCore, impute, mclust, ecoliasv2cdf) is used

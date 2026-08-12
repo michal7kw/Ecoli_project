@@ -44,7 +44,7 @@ The build then writes two representations of the same data on purpose:
 | ---------------------------------------------------------------- | ------------------------------------------------------------------ |
 | `data/Ecomics.transcriptome.no_avg.v8.txt`                       | the published release                                              |
 | `data/Ecomics.proteome.v5.csv`, `data/Ecomics.metabolome.v3.csv` | the published release, condition-**averaged**                      |
-| `data/external/prokaryomics/*.json`                              | [`00`](00-acquire.md) — fluxome, phenome, and all three ontologies |
+| `data/external/prokaryomics/*.json`                              | `scripts/00_acquire.py` — fluxome, phenome, and all three ontologies |
 
 ## 1.4 What it writes
 
@@ -66,9 +66,14 @@ The compendium as built:
 | metabolome | 49 | 49 |
 | proteome | 33 | 33 |
 | fluxome | 43 | 31 |
-| **distinct conditions, all layers** | | **696** |
+| **distinct conditions, all layers** | | **674** |
 
-Ontologies: **65 strains × 152** genotype features, **112 media × 120** composition features, 69 distinct stresses, 296 distinct perturbations, 26 reactions with a BiGG cross-reference.
+Ontologies: **65 strains × 152** genotype features, **112 media × 120** composition features, 69 distinct stresses, 273 distinct perturbations, 26 reactions with a BiGG cross-reference.
+
+Every figure above is printed by the build itself, so a re-run is the check. The condition total
+and the perturbation count both moved on 2026-08-11 — 696 → 674 and 296 → 273 — when stress
+encoding changed from one column per observed `;`-joined *combination* to one per atomic stressor.
+Older prose still quoting 696 or 296 predates that change.
 
 ## 1.6 Check
 

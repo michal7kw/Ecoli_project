@@ -198,6 +198,16 @@ def main() -> int:
             entry["tfs"] = _scalars(tf_m)
         results[f"depth_{depth}"] = entry
 
+        # Write after EVERY depth, not once at the end. A sweep is hours long
+        # (depths 5,6,8 alone are ~1.5 h on a 3090) and the end-only write meant
+        # an interruption discarded every completed depth with it -- which is
+        # how the 5,6,8 run of 2026-08-12 left no trace at all, not even a
+        # partial curve. Each depth is independent, so a truncated file is a
+        # shorter curve rather than a corrupt one.
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps(results, indent=2, default=float),
+                            encoding="utf-8")
+
         # Cache the out-of-fold predictions themselves, not just the metrics
         # summarized above. `08_methods_faithful_eval.py` re-scores these SAME
         # predictions on the paper's axis (per condition, against the

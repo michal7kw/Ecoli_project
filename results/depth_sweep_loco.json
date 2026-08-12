@@ -1,6 +1,6 @@
 {
-  "depth_2": {
-    "memory_depth": 2,
+  "depth_1": {
+    "memory_depth": 1,
     "config": {
       "folds": 5,
       "epochs": 600,
@@ -9,11 +9,11 @@
       "rank": 64,
       "weight_decay": 0.0001,
       "lr": 0.0003,
-      "depth_sweep": null,
+      "depth_sweep": "1,2,3,4",
       "wy_weight_decay": 0.0,
       "device": "cuda",
       "medium_kind": "present",
-      "out": "E:\\Githubs\\Ecoli\\Ecoli_project\\results\\transcriptome_loco.json",
+      "out": "results\\depth_sweep_loco.json",
       "n_folds_effective": 5,
       "n_profiles": 3578,
       "n_genes": 4096,
@@ -23,17 +23,17 @@
       "n_wildtype": 2510
     },
     "all_genes": {
-      "pcc_mean": 0.186264319565669,
-      "pcc_sd": 0.10666941497785688,
-      "pcc_sem": 0.0016667096090290138,
+      "pcc_mean": 0.041990786144172246,
+      "pcc_sd": 0.1026273390862324,
+      "pcc_sem": 0.0016035521732223812,
       "n": 4096,
-      "frac_above_0.3": 0.149658203125,
-      "frac_above_0.5": 0.004150390625,
-      "pcc_row_mean": 0.5999452150601324,
-      "pcc_row_sd": 0.13217359558924907,
+      "frac_above_0.3": 0.01904296875,
+      "frac_above_0.5": 0.0,
+      "pcc_row_mean": 0.5909953201554176,
+      "pcc_row_sd": 0.12088267004133249,
       "n_rows": 3578,
-      "rmse": 0.09626934225213453,
-      "calibration_slope": 0.9583446144677759,
+      "rmse": 0.09756584462746679,
+      "calibration_slope": 1.0124763013208395,
       "n_conditions_available": 596,
       "pcc_column_suppressed": false
     },
@@ -89,19 +89,19 @@
       "mean": 0.0,
       "wildtype": 0.0
     },
-    "seconds": 2623.0632405281067,
+    "seconds": 352.1649386882782,
     "tfs": {
-      "pcc_mean": 0.17634791407955488,
-      "pcc_sd": 0.10837083263368066,
-      "pcc_sem": 0.007662975063810799,
+      "pcc_mean": 0.032668015022522326,
+      "pcc_sd": 0.09958947352938793,
+      "pcc_sem": 0.007042039206742838,
       "n": 200,
-      "frac_above_0.3": 0.135,
+      "frac_above_0.3": 0.0,
       "frac_above_0.5": 0.0,
-      "pcc_row_mean": 0.5668838676588226,
-      "pcc_row_sd": 0.14968060476724218,
+      "pcc_row_mean": 0.5555378747208639,
+      "pcc_row_sd": 0.13898687976349547,
       "n_rows": 3578,
-      "rmse": 0.08699871116225165,
-      "calibration_slope": 0.9336919873210106,
+      "rmse": 0.08835211733821578,
+      "calibration_slope": 1.0021072082269835,
       "n_conditions_available": 3578,
       "pcc_column_suppressed": false
     }

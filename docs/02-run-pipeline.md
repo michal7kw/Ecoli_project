@@ -1,5 +1,5 @@
 
-# 02 - [[scripts/02_run_pipeline.py]] - the normalization pipeline, on real raw data
+# 02 - `scripts/02_run_pipeline.py` - the normalization pipeline, on real raw data
 
 **Layer:** transcriptome. 
 **Reads:** [GSE12411](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE12411) (6 CEL files), [GSE73673](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi) (87 htseq tables). 
@@ -11,15 +11,15 @@ A **separate track** from the model. This demonstrates how the Ecomics compendiu
 
 ## 2.1 What it does
 
-Five steps, in the order of the paper's Fig. 2, driven by [[ecomics/pipeline/run.py]]:
+Five steps, in the order of the paper's Fig. 2, driven by [`ecomics/pipeline/run.py`](../ecomics/pipeline/run.py):
 
 | Step | Module                                                         | What it does                                                                         |
 | ---- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| 1    | [[ecomics/pipeline/arrays.py]], [[ecomics/pipeline/rnaseq.py]] | platform preprocessing - RMA **from scratch** on CEL files; htseq counts for RNA-Seq |
-| 2    | [[ecomics/pipeline/noise.py]]                                  | GMM noise removal - fit a two-component mixture, drop the noise component            |
-| 3    | [[ecomics/pipeline/platform.py]]                               | quantile normalization → loess → z-score, to put two platforms on one scale          |
-| 4    | [[ecomics/pipeline/absolute.py]]                               | loess absolute quantification against a reference                                    |
-| 5    | [[ecomics/pipeline/impute.py]]                                 | missingness filter, then k-NN imputation                                             |
+| 1    | `pipeline/arrays.py`, `pipeline/rnaseq.py`                     | platform preprocessing - RMA **from scratch** on CEL files; htseq counts for RNA-Seq |
+| 2    | `pipeline/noise.py`                                            | GMM noise removal - fit a two-component mixture, drop the noise component            |
+| 3    | `pipeline/platform.py`                                         | quantile normalization → loess → z-score, to put two platforms on one scale          |
+| 4    | `pipeline/absolute.py`                                         | loess absolute quantification against a reference                                    |
+| 5    | `pipeline/impute.py`                                           | missingness filter, then k-NN imputation                                             |
 
 `pipeline/validate.py` then cross-checks steps 1, 3 and 5 against Bioconductor.
 
@@ -40,9 +40,9 @@ Five steps, in the order of the paper's Fig. 2, driven by [[ecomics/pipeline/run
 
 | Input | Supplied by | Shape |
 |---|---|---|
-| GSE12411 CEL files | [`00`](00-acquire.md) | 6 raw Affymetrix arrays, GPL199 |
-| GSE73673 htseq tables | [`00`](00-acquire.md) | 87 count tables |
-| `data/external/raw/cdf/ecoliasv2.tsv` | [`00`](00-acquire.md) step 5 | 7,312 probe sets, 283,258 probe-cell rows |
+| GSE12411 CEL files | `scripts/00_acquire.py` | 6 raw Affymetrix arrays, GPL199 |
+| GSE73673 htseq tables | `scripts/00_acquire.py` | 87 count tables |
+| `data/external/raw/cdf/ecoliasv2.tsv` | `scripts/00_acquire.py` step 5 | 7,312 probe sets, 283,258 probe-cell rows |
 
 ## 2.4 What it writes
 
@@ -68,8 +68,8 @@ Five steps, in the order of the paper's Fig. 2, driven by [[ecomics/pipeline/run
 | `half_life_control` | the negative control, with the paper's own targets alongside |
 | `synthetic_reference_warning` | travels with the numbers, so a plot cannot lose it |
 
-It exists so the figure atlas can plot these results without hard-coding them. 
-`results/figures/pipeline-validation.{png,pdf}` are rendered from it.
+It exists so these results can be plotted without hard-coding them. The figure atlas that
+renders it is not part of this subset.
 
 ## 2.5 Results
 
@@ -85,7 +85,7 @@ Here an independent implementation exists, so agreement can be measured rather t
 ## 2.6 Check — how to tell it worked
 
 ```
-  combined matrix: <n> genes x 93 samples across 2 platforms
+  combined matrix: 4069 genes x 93 samples across 2 platforms
   half-life negative control: short=… long=…  P=0.642  (not significant, as in the paper)
 ```
 
