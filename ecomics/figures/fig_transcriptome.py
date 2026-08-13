@@ -42,7 +42,7 @@ PREDICTORS = ["MOMA", "random", "mean", "wildtype"]
 # The constant stays, and so does the citation in the footer. The npz is
 # gitignored and rewritten by any `scripts/03` run, so the day it stops
 # matching is the day this matters again --
-# `test_saved_predictions_belong_to_the_run_the_figures_cite` is what notices.
+# A provenance test is what notices.
 # Anything read from the npz is recomputed from the npz, never borrowed from a
 # JSON.
 NPZ_RUN = "transcriptome_loco"
@@ -138,18 +138,28 @@ def transcriptome_distribution(theme=P.LIGHT):
         "wild-type baseline": (z["baseline_wildtype"], theme.series[2]),
     }
 
-    fig, axes = P.panels(
-        1, 2, figsize=(11.0, 4.4), theme=theme,
-        title="0.287 is not “every gene at 0.29”",
-        subtitle="Per-gene PCC across 596 conditions, for all 4,096 genes. "
-                 "A mean is consistent with a uniform smear or with a subset "
-                 "of genes tracked well and the rest not; these are the "
-                 "latter.")
-
+    # Computed before the title, because the title QUOTES it. This read
+    # "0.287 is not every gene at 0.29" as a string literal while the npz it
+    # draws gives 0.186 -- a 756-era number surviving on a 603-era figure, in
+    # the most prominent line on the panel. Same defect as `memory-depth`'s
+    # caption, same fix: derive it. The number is recomputed from the npz here
+    # rather than read from the JSON, per this module's rule.
     curves = {}
     for name, (pred, color) in series.items():
         r = pcc_per_column(pred, true)
         curves[name] = (r[np.isfinite(r)], color)
+
+    mean_pcc = float(curves["MOMA"][0].mean())
+    cfg = _loco()["config"]
+
+    fig, axes = P.panels(
+        1, 2, figsize=(11.0, 4.4), theme=theme,
+        title=f"{mean_pcc:.3f} is not “every gene at {mean_pcc:.2f}”",
+        subtitle=f"Per-gene PCC across {cfg['n_conditions']} conditions, for "
+                 f"all {cfg['n_genes']:,} genes. "
+                 "A mean is consistent with a uniform smear or with a subset "
+                 "of genes tracked well and the rest not; these are the "
+                 "latter.")
 
     ax = axes[0]
     for name, (r, color) in curves.items():

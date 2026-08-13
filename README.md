@@ -4,15 +4,15 @@
 
 All five MOMA layers — transcriptome, proteome, metabolome, fluxome, phenome - are implemented and evaluated here. Every figure below is leave-one-**condition**-out cross-validation.
 
-| | Ours | Paper | |
-|---|---|---|---|
-| transcriptome, the paper's own protocol | **0.544 ± 0.165** | 0.54 ± 0.15 | 🟢 reproduces |
-| proteome, neighbours vs own mRNA | **0.264 vs 0.086** (3.1×) | 0.55 vs 0.34 | 🟢 direction reproduces, level does not |
-| proteome coverage, union of 6 networks | **588 / 589** | 1001 / 1001 | 🟢 no single network suffices |
-| metabolome, core from protein | **0.420 ± 0.390** | 0.65 ± 0.21 | 🔴 outside one SD, and only 25 conditions |
-| fluxome, FBA vs a held-out constant | **0.843** vs **0.896** | 0.72 | 🔴 the baseline wins, p = 5e-5 |
-| phenome, consensus over 179 conditions | **0.602** | 0.65 ± 0.01 | 🟢 close; the paper CV'd over 101 |
-| normalization pipeline vs Bioconductor | **PCC 0.999897** (RMA) | — | 🟢 independent agreement |
+|                                         | Ours                      | Paper        |                                           |
+| --------------------------------------- | ------------------------- | ------------ | ----------------------------------------- |
+| transcriptome, the paper's own protocol | **0.544 ± 0.165**         | 0.54 ± 0.15  | 🟢 reproduces                             |
+| proteome, neighbours vs own mRNA        | **0.264 vs 0.086** (3.1×) | 0.55 vs 0.34 | 🟢 direction reproduces, level does not   |
+| proteome coverage, union of 6 networks  | **588 / 589**             | 1001 / 1001  | 🟢 no single network suffices             |
+| metabolome, core from protein           | **0.420 ± 0.390**         | 0.65 ± 0.21  | 🔴 outside one SD, and only 25 conditions |
+| fluxome, FBA vs a held-out constant     | **0.843** vs **0.896**    | 0.72         | 🔴 the baseline wins, p = 5e-5            |
+| phenome, consensus over 179 conditions  | **0.602**                 | 0.65 ± 0.01  | 🟢 close; the paper CV'd over 101         |
+| normalization pipeline vs Bioconductor  | **PCC 0.999897** (RMA)    | —            | 🟢 independent agreement                  |
 
 > ❗ **The fluxome row is the one to read twice.** `0.843` looks like it beats the paper's `0.72` until you ask what a *constant* scores on the same 22 reactions — which is `0.896`. FBA here captures the shape every flux profile shares and nothing that distinguishes one condition from another. 
 

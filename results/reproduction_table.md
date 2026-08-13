@@ -28,7 +28,7 @@ paper's 0.55 invites a comparison the sample size cannot support. Those cells no
 | transcriptome | PCC, random baseline | -0.100 | 0.25 | a constant predictor scores ~0 on this axis; see below |
 | transcriptome | PCC, mean baseline | -0.106 | 0.26 | a constant predictor scores ~0 on this axis; see below |
 | transcriptome | PCC, wildtype baseline | -0.101 | 0.36 | a constant predictor scores ~0 on this axis; see below |
-| transcriptome | PCC, TFs | 0.176 | 0.68 +/- 0.14 | 200 transcription factors |
+| transcriptome | PCC, TFs | 0.177 | 0.68 +/- 0.14 | 176 transcription factors |
 | proteome | PCC, ensemble | n/a (5 cond) | 0.55 +/- 0.26 | 589 averaged proteins, not 1,001 individual profiles |
 | proteome | coverage | 588/589 | 1001/1001 | union of 6 networks (the paper's own, Supplementary Data 2) |
 | proteome | PCC, own-mRNA baseline | n/a (5 cond) | 0.34 +/- 0.18 | |
@@ -53,11 +53,11 @@ paper's 0.55 invites a comparison the sample size cannot support. Those cells no
 
 - On the PUBLISHED scale, per molecule, MOMA reaches 0.186 against baselines of -0.100 / -0.106 / -0.101. A constant predictor scores ~0 on this axis by construction, so the margin is unambiguous -- but the number is NOT comparable to the paper's 0.54.
 - **The paper's own axis is per profile**, against the condition-averaged truth, on per-gene min-max values, over exponential-phase profiles only (Supplementary Methods 3.3.3). None of those four choices is stated in the article body. Applying all four, the same model with no code change scores **0.544 against the paper's 0.54** -- see `scripts/08_methods_faithful_eval.py` and `results/methods_faithful_eval.json`.
-- What remains open is the BASELINE LEVEL, not the model: under the paper's protocol ours come out near 0.53 where the paper reports 0.25/0.26/0.36. A baseline has no free parameters, so that gap cannot be a modelling difference. See DISCREPANCIES.md section 3.
+- What remains open is the BASELINE LEVEL, not the model: under the paper's protocol ours come out near 0.53 where the paper reports 0.25/0.26/0.36. A baseline has no free parameters, so that gap cannot be a modelling difference -- it is a difference in what the baseline is computed over.
 
 ## Why some cells cannot match
 
 - **Proteome and metabolome are condition-AVERAGED in the public release.** The paper trained on 71 proteome profiles x 1,001 proteins and 696 metabolome profiles x 356 metabolites; only 33 x 589 and 49 x 114 averaged rows were ever published.
 - **The absolute-scale reference is not redistributable.** Ecomics is calibrated against Taniguchi et al. 2010 copy numbers; the pipeline here reproduces the machinery but demonstrates it on a synthetic reference.
 - **Only 26 of 120 flux reactions carry a BiGG cross-reference** in prokaryomics `reaction.json`, and 22 of those exist in iJO1366, so the fluxome comparison covers 22 reactions rather than 120.
-- **The 612-feature ontology reconstructs to 603 features** (152 strain + 120 medium + 58 stress + 273 perturbation, at medium_kind='present'): counts here are OBSERVED values, the paper's are its own categorization. Medium matches exactly; every remaining gap is a counting difference. This read 756 (240 medium / 68 stress) before 2026-08-11, and its perturbation block read 296 until the fluxome's gene symbols were normalized to b-numbers -- see DISCREPANCIES.md 14-17.
+- **The 612-feature ontology reconstructs to 603 features** (152 strain + 120 medium + 58 stress + 273 perturbation, at medium_kind='present'): counts here are OBSERVED values, the paper's are its own categorization. Medium matches exactly; every remaining gap is a counting difference. This read 756 (240 medium / 68 stress) under an earlier encoding, and its perturbation block read 296 until the fluxome's gene symbols were normalized to b-numbers.

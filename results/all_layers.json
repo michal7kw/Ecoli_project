@@ -13,7 +13,7 @@
       "wy_weight_decay": 0.0,
       "device": "cuda",
       "medium_kind": "present",
-      "out": "E:\\Githubs\\Ecoli\\results\\transcriptome_loco.json",
+      "out": "E:\\Githubs\\Ecoli\\Ecoli_project\\results\\transcriptome_loco.json",
       "n_folds_effective": 5,
       "n_profiles": 3578,
       "n_genes": 4096,
@@ -89,19 +89,19 @@
       "mean": 0.0,
       "wildtype": 0.0
     },
-    "seconds": 1807.7326228618622,
+    "seconds": 292.05558681488037,
     "tfs": {
-      "pcc_mean": 0.17634791407955488,
-      "pcc_sd": 0.10837083263368066,
-      "pcc_sem": 0.007662975063810799,
-      "n": 200,
-      "frac_above_0.3": 0.135,
+      "pcc_mean": 0.1772286263794161,
+      "pcc_sd": 0.10839932130425921,
+      "pcc_sem": 0.008170906279441052,
+      "n": 176,
+      "frac_above_0.3": 0.13068181818181818,
       "frac_above_0.5": 0.0,
-      "pcc_row_mean": 0.5668838676588226,
-      "pcc_row_sd": 0.14968060476724218,
+      "pcc_row_mean": 0.5935650497287902,
+      "pcc_row_sd": 0.14431885430543456,
       "n_rows": 3578,
-      "rmse": 0.08699871116225165,
-      "calibration_slope": 0.933691987321011,
+      "rmse": 0.09249063579564307,
+      "calibration_slope": 0.967686088549269,
       "n_conditions_available": 3578,
       "pcc_column_suppressed": false
     }
@@ -118,7 +118,7 @@
       "pcc_row_sd": 0.1624209356584307,
       "n_rows": 5,
       "rmse": 0.9184579070385145,
-      "calibration_slope": 0.031498012857443754,
+      "calibration_slope": 0.031498012857443795,
       "n_conditions_available": 5,
       "pcc_column_suppressed": true,
       "coverage": 288
@@ -150,7 +150,7 @@
       "pcc_row_sd": 0.2190242349518892,
       "n_rows": 5,
       "rmse": 0.6986748882231315,
-      "calibration_slope": 0.082999730126216,
+      "calibration_slope": 0.08299973012621595,
       "n_conditions_available": 5,
       "pcc_column_suppressed": true,
       "coverage": 388
@@ -166,7 +166,7 @@
       "pcc_row_sd": 0.22886377303812258,
       "n_rows": 5,
       "rmse": 1.1096625912663816,
-      "calibration_slope": 0.015176335938360588,
+      "calibration_slope": 0.015176335938360602,
       "n_conditions_available": 5,
       "pcc_column_suppressed": true,
       "coverage": 566
@@ -182,7 +182,7 @@
       "pcc_row_sd": 0.24800915047624278,
       "n_rows": 4,
       "rmse": 0.6618486507670552,
-      "calibration_slope": 0.0774052745495004,
+      "calibration_slope": 0.07740527454950047,
       "n_conditions_available": 5,
       "pcc_column_suppressed": true,
       "coverage": 5
@@ -230,7 +230,7 @@
       "pcc_row_sd": 0.1855189527544763,
       "n_rows": 5,
       "rmse": 0.5756916266733015,
-      "calibration_slope": -0.03493125382524552,
+      "calibration_slope": -0.03493125382524538,
       "n_conditions_available": 5,
       "pcc_column_suppressed": true
     },
@@ -248,7 +248,7 @@
       "pcc_row_sd": 0.39018347975167617,
       "n_rows": 25,
       "rmse": 0.15747669618200769,
-      "calibration_slope": 0.17894998956996988,
+      "calibration_slope": 0.17894998956996996,
       "n_conditions_available": 25,
       "pcc_column_suppressed": false
     },
@@ -293,7 +293,7 @@
       "pcc_row_sd": 0.21530310333624464,
       "n_rows": 25,
       "rmse": 0.10132110250210927,
-      "calibration_slope": 0.6440178198669292,
+      "calibration_slope": 0.6440178198669291,
       "n_conditions_available": 25,
       "pcc_column_suppressed": false
     },
@@ -315,7 +315,7 @@
       "pcc_row_sd": 0.1378866718564214,
       "n_rows": 6,
       "rmse": 0.31752589069508996,
-      "calibration_slope": 0.3436676497928732,
+      "calibration_slope": 0.3436676497928733,
       "n_conditions_available": 6,
       "pcc_column_suppressed": true
     },
@@ -377,7 +377,7 @@
       "pcc_row_sd": 0.12766105406359823,
       "n_rows": 42,
       "rmse": 31.474146199496968,
-      "calibration_slope": 0.8312903925454029,
+      "calibration_slope": 0.831290392545403,
       "n_conditions_available": 42,
       "pcc_column_suppressed": false
     },
@@ -393,11 +393,11 @@
         "pcc_row_sd": 0.1374057761580269,
         "n_rows": 42,
         "rmse": 21.94309689632452,
-        "calibration_slope": 0.9891721866476091,
+        "calibration_slope": 0.989172186647609,
         "n_conditions_available": 42,
         "pcc_column_suppressed": false,
         "margin_vs_headline_per_profile": -0.05311183495531946,
-        "wilcoxon_p_per_profile": 5.065897614224593e-05
+        "wilcoxon_p_per_profile": 5.0658976142245934e-05
       },
       "mean": {
         "pcc_mean": -0.7204364396160862,
@@ -410,7 +410,7 @@
         "pcc_row_sd": 0.13753751097912165,
         "n_rows": 42,
         "rmse": 21.94579258087935,
-        "calibration_slope": 0.9883908374432077,
+        "calibration_slope": 0.9883908374432075,
         "n_conditions_available": 42,
         "pcc_column_suppressed": false,
         "margin_vs_headline_per_profile": -0.0530643973552446,
@@ -427,7 +427,7 @@
         "pcc_row_sd": 0.07930859411804252,
         "n_rows": 42,
         "rmse": 27.76804412795202,
-        "calibration_slope": 0.9742711817924284,
+        "calibration_slope": 0.9742711817924287,
         "n_conditions_available": 42,
         "pcc_column_suppressed": false,
         "margin_vs_headline_per_profile": 0.007117810485919751,
