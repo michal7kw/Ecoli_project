@@ -156,6 +156,34 @@ class Ecomics:
         sets = [set(self.conditions(l)) for l in layers]
         return sorted(set.intersection(*sets))
 
+    def aligned(self, *layers: str) -> tuple[list[str], dict]:
+        """Condition-averaged matrices restricted to the conditions all `layers` share.
+
+        Returns `(shared, {layer: (values, columns, condition_keys)})`, every
+        layer's rows in the SAME order -- which is the whole point, because the
+        caller then indexes two matrices with one fold's index array and a
+        mismatch would be silent rather than an error.
+
+        The sort is what guarantees that. `shared_conditions` returns a sorted
+        list, but `subset_conditions` preserves each matrix's own row order, so
+        two layers can hold the same conditions in different orders; sorting
+        each by `condition_keys` puts them back in step.
+
+        This lived as a private `_aligned` copy-pasted into `scripts/04`, `12`
+        and `17`. The bodies were byte-identical and the docstrings had already
+        drifted, which is the usual first sign. It belongs here rather than in
+        `evaluate.py` because it is an operation on the data and adds no import
+        edge -- `averaged_by_condition` and `subset_conditions` are already
+        `LayerMatrix` methods.
+        """
+        shared = self.shared_conditions(*layers)
+        out = {}
+        for l in layers:
+            m = self.matrix(l).averaged_by_condition().subset_conditions(shared)
+            order = np.argsort(m.condition_keys)
+            out[l] = (m.values[order], m.columns, m.condition_keys[order])
+        return shared, out
+
     def condition_info(self, key: str) -> dict:
         row = self.conn.execute(
             "SELECT * FROM condition_layers WHERE key=?", (key,)).fetchone()
@@ -266,6 +294,3 @@ class Ecomics:
     def __exit__(self, *exc):
         self.close()
 
-
-def open_db(**kw) -> Ecomics:
-    return Ecomics(**kw)

@@ -1,10 +1,17 @@
 """Download the external resources MOMA needs but Ecomics does not ship.
 
-  RegulonDB  transcriptional regulatory network  -> proteome TRN predictor
-  STRING     protein-protein interactions        -> proteome PPI predictor
-  KEGG       pathway membership                  -> proteome KEGG predictor
+  KEGG       gene list: symbol -> b-number       -> db/build.py, TF subsets
   BiGG       iJO1366 genome-scale model          -> fluxome FBA module
   GEO        raw .CEL arrays + GSE73673 counts   -> preprocessing pipeline demo
+
+This used to fetch three interaction networks too -- RegulonDB via SBRG,
+STRING v12, the KEGG pathway REST endpoint -- for the proteome module's TRN,
+PPI and KEGG predictors. Those downloads are deliberately absent, because the
+paper's own edge lists in Supplementary Data 2 became the layer's only source
+(worth +0.113 per-profile PCC); a fourth, the KEGG pathway LIST, turned out to
+have been fetched and read by nothing at all. `kegg_gene_list` stays and is
+not a network -- `db/build.py` asserts against it while normalizing
+perturbations to b-numbers.
 
 Every fetch is idempotent and checksummed (see acquire/cache.py). Sources that
 have moved hosts over the years declare several candidate URLs; the first that
@@ -26,11 +33,15 @@ from ecomics.acquire.cache import DownloadError, download, fetch_bytes, verify
 # Networks and models
 # --------------------------------------------------------------------------
 def fetch_networks(force: bool = False, verbose: bool = True) -> dict[str, Path]:
-    """Download RegulonDB, STRING, KEGG and BiGG. Returns {key: path}.
+    """Download the KEGG gene list and the BiGG model. Returns {key: path}.
 
-    Failures are collected rather than raised: a missing PPI file degrades the
-    proteome ensemble from four predictors to three, which is a real result
-    worth reporting, not a reason to abort acquisition.
+    Failures are collected rather than raised. That tolerance was written for
+    the interaction networks, where a missing PPI file degraded the proteome
+    ensemble from four predictors to three -- a real result worth reporting,
+    not a reason to abort. Those are gone; what remains is less forgiving, and
+    the guard has moved downstream: a missing `kegg_gene_list` makes
+    `gene_symbol_map` return `{}`, and `db/build.py` ASSERTS on that rather
+    than building a database with three collapsed cross-layer joins.
     """
     C.ensure_dirs()
     got: dict[str, Path] = {}

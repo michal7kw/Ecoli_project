@@ -13,7 +13,7 @@
       "wy_weight_decay": 0.0,
       "device": "cuda",
       "medium_kind": "present",
-      "out": "E:\\Githubs\\Ecoli\\Ecoli_project\\results\\transcriptome_loco.json",
+      "out": "E:\\Githubs\\Ecoli\\results\\transcriptome_loco.json",
       "n_folds_effective": 5,
       "n_profiles": 3578,
       "n_genes": 4096,
@@ -33,7 +33,7 @@
       "pcc_row_sd": 0.13217359558924907,
       "n_rows": 3578,
       "rmse": 0.09626934225213453,
-      "calibration_slope": 0.9583446144677759,
+      "calibration_slope": 0.9583446144677755,
       "n_conditions_available": 596,
       "pcc_column_suppressed": false
     },
@@ -49,7 +49,7 @@
         "pcc_row_sd": 0.11814203689433407,
         "n_rows": 3578,
         "rmse": 0.09853239773926283,
-        "calibration_slope": 0.985831006429125,
+        "calibration_slope": 0.9858310064291219,
         "n_conditions_available": 596,
         "pcc_column_suppressed": false
       },
@@ -64,7 +64,7 @@
         "pcc_row_sd": 0.11814818265493099,
         "n_rows": 3578,
         "rmse": 0.0985113003846324,
-        "calibration_slope": 0.9867680981743712,
+        "calibration_slope": 0.9867680981743733,
         "n_conditions_available": 596,
         "pcc_column_suppressed": false
       },
@@ -79,7 +79,7 @@
         "pcc_row_sd": 0.11203851049970896,
         "n_rows": 3578,
         "rmse": 0.0987957574724207,
-        "calibration_slope": 0.9789067718999841,
+        "calibration_slope": 0.9789067718999809,
         "n_conditions_available": 596,
         "pcc_column_suppressed": false
       }
@@ -89,7 +89,7 @@
       "mean": 0.0,
       "wildtype": 0.0
     },
-    "seconds": 2623.0632405281067,
+    "seconds": 1807.7326228618622,
     "tfs": {
       "pcc_mean": 0.17634791407955488,
       "pcc_sd": 0.10837083263368066,
@@ -101,7 +101,7 @@
       "pcc_row_sd": 0.14968060476724218,
       "n_rows": 3578,
       "rmse": 0.08699871116225165,
-      "calibration_slope": 0.9336919873210106,
+      "calibration_slope": 0.933691987321011,
       "n_conditions_available": 3578,
       "pcc_column_suppressed": false
     }

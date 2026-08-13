@@ -26,8 +26,7 @@ Two reasons, both structural.
    array rather than by removing the Python interpreter. That is why the dense
    path below is separate (it makes 5 passes instead of 9) and why `einsum` is
    used for the second moments (it fuses multiply-and-reduce, allocating no
-   input-sized temporary). Agreement with the loop is ~1e-15 and is pinned by
-   `tests/test_metrics.py`.
+   input-sized temporary). Agreement with the reference loop is ~1e-15.
 
 Pairwise-complete correlation
 -----------------------------
@@ -48,7 +47,7 @@ silently change every reported number:
     population sd < 1e-12       -> NaN (a constant column has no correlation)
 
 Note the second is the *population* sd (`ndarray.std()`, ddof=0), i.e.
-`sqrt(var_j / n_j)`, not the sample sd. `tests/test_metrics.py` pins this.
+`sqrt(var_j / n_j)`, not the sample sd.
 """
 
 from __future__ import annotations
@@ -174,7 +173,8 @@ def pcc_per_column(pred: np.ndarray, true: np.ndarray) -> np.ndarray:
     Methods do. The two differ by ~0.3 PCC on identical predictions, which is
     why "ours 0.295 against the paper's 0.54" stood as the headline failure of
     this reproduction until the supplement was read -- on the paper's axis the
-    same model scores 0.578. See `DISCREPANCIES.md` section 3.
+    same model scores 0.544 against the paper's 0.54, with no change to the
+    model. `scripts/08_methods_faithful_eval.py` computes it.
 
     Why it is nonetheless primary here: a condition-blind predictor scores ~0 on
     this axis BY CONSTRUCTION, so no choice of representation can inflate a

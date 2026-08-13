@@ -5,7 +5,7 @@
     python scripts/03_train_moma.py --folds 0            # true leave-one-condition-out
     python scripts/03_train_moma.py --epochs 40 --depth 2
     python scripts/03_train_moma.py --depth-sweep        # sweep depths 1,2,3,4
-    python scripts/03_train_moma.py --depth-sweep 1,2,3,4,5,6,8   # the published curve
+    python scripts/03_train_moma.py --depth-sweep 1,2,3,4,5,6,8 --out results/depth_sweep_loco.json
 
 Conditions, not profiles, are held out: Ecomics averages 6.0 replicate profiles
 per condition, so a random split lets a model score well by recognising a
@@ -15,6 +15,12 @@ Writes two things: the metrics to `--out`, and, for a single-depth run, the
 out-of-fold predictions to `results/transcriptome_predictions.npz`. The second
 is what lets `08_methods_faithful_eval.py` re-score this run on the paper's own
 axis without refitting the model.
+
+ALWAYS pass `--out` with `--depth-sweep`. It defaults to
+`results/transcriptome_loco.json`, and a sweep writes one block per depth -- so
+running a sweep bare replaces the single-depth result of record with a
+differently-shaped file. The prediction cache is safe either way: the npz is
+only written when exactly one depth was requested.
 """
 
 from __future__ import annotations
@@ -47,11 +53,11 @@ def _scalars(m: dict) -> dict:
 def load(db: Ecomics, medium_kind: str = "present"):
     """Load the transcriptome layer and its encoded conditions.
 
-    `medium_kind` is exposed because the encoder default changed on 2026-08-11
+    `medium_kind` is exposed because the encoder default changed
     (240-wide medium -> the paper's 120) and the change cost real accuracy:
     PCC/molecule 0.286 -> 0.188 under otherwise identical hyperparameters.
     Reproducing that comparison, or separating it from the simultaneous stress
-    change, needs the flag rather than an edit. See DISCREPANCIES.md 14-17.
+    change, needs the flag rather than an edit.
     """
     enc = build_encoder(db, medium_kind=medium_kind)
     T = db.matrix("transcriptome")
@@ -67,19 +73,15 @@ def tf_indices(db: Ecomics, columns: list[str]) -> np.ndarray:
     The paper reports TF performance separately (PCC 0.68 vs 0.54 for all
     genes): TFs sit at the input end of the regulatory hierarchy, so the
     condition reaches them almost directly.
+
+    Delegates to `paper_protocol.tf_indices`, which reads the paper's own
+    179-regulator list from Supplementary Data 2. This used to be a third copy
+    of a RegulonDB-scraping implementation; all three broke together when that
+    scrape was removed, which is the argument for there being
+    one. `db` is unused and kept for signature stability.
     """
-    import csv
-
-    from ecomics.networks import gene_symbol_map
-
-    path = C.REMOTE_FILES.get("regulondb_tf_gene")
-    if path is None or not path.exists():
-        return np.array([], dtype=int)
-    names = {r["regulator"].strip().lower()
-             for r in csv.DictReader(path.open(encoding="utf-8"))}
-    sym2b = gene_symbol_map()
-    tf_b = {sym2b[n] for n in names if n in sym2b}
-    return np.array([i for i, c in enumerate(columns) if c in tf_b], dtype=int)
+    from ecomics.paper_protocol import tf_indices as _tf
+    return _tf(columns)
 
 
 def main() -> int:
@@ -88,8 +90,8 @@ def main() -> int:
     ap.add_argument("--folds", type=int, default=5,
                     help="grouped folds; 0 = true leave-one-condition-out. "
                          "5 is what every published run here used -- the "
-                         "default was 10, so the '5-fold LOCO' in README.md and "
-                         "DISCREPANCIES.md was only reproducible by knowing to "
+                         "default was 10, so the '5-fold LOCO' reported in the "
+                         "documentation was only reproducible by knowing to "
                          "pass it.")
     ap.add_argument("--epochs", type=int, default=600)
     ap.add_argument("--depth", type=int, default=C.PAPER["memory_depth"])
@@ -106,15 +108,15 @@ def main() -> int:
                          "nothing recorded. Example: --depth-sweep 1,2,3,4,5,6,8")
     ap.add_argument("--wy-weight-decay", type=float, default=0.0,
                     help="weight decay on w_y alone; 0 keeps the recurrence "
-                         "alive (see scripts/06_recurrence_experiment.py)")
+                         "alive")
     ap.add_argument("--device", default="cpu",
                     help="torch device: cpu | cuda | cuda:N")
     ap.add_argument("--medium-kind", default="present",
                     choices=("present", "amount", "both"),
-                    help="medium encoding. 'present' (default, 626 features) is "
+                    help="medium encoding. 'present' (default, 603 features) is "
                          "the paper's 120-wide block; 'both' (746) doubles it to "
                          "presence AND amount. The default changed from 'both' "
-                         "on 2026-08-11 and it cost PCC/molecule 0.286 -> 0.188 "
+                         "and it cost PCC/molecule 0.286 -> 0.188 "
                          "-- use this flag to reproduce or ablate that")
     ap.add_argument("--out", type=Path, default=C.RESULTS / "transcriptome_loco.json")
     args = ap.parse_args()
@@ -201,7 +203,7 @@ def main() -> int:
         # Write after EVERY depth, not once at the end. A sweep is hours long
         # (depths 5,6,8 alone are ~1.5 h on a 3090) and the end-only write meant
         # an interruption discarded every completed depth with it -- which is
-        # how the 5,6,8 run of 2026-08-12 left no trace at all, not even a
+        # how one such run left no trace at all, not even a
         # partial curve. Each depth is independent, so a truncated file is a
         # shorter curve rather than a corrupt one.
         args.out.parent.mkdir(parents=True, exist_ok=True)

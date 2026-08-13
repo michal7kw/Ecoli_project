@@ -1,0 +1,395 @@
+{
+  "script": "scripts/17_paper_networks_proteome.py",
+  "shared_conditions": 5,
+  "proteome_targets": 589,
+  "cpn_held_out_conditions": 28,
+  "alpha": 0.001,
+  "max_neighbours": 200,
+  "networks": {
+    "paper": {
+      "TRN": {
+        "nodes": 1516,
+        "edges": 3190
+      },
+      "PPI": {
+        "nodes": 4235,
+        "edges": 412245
+      },
+      "KEGG": {
+        "nodes": 1358,
+        "edges": 54788
+      },
+      "SIGMA": {
+        "nodes": 3948,
+        "edges": 8180
+      },
+      "SRNA": {
+        "nodes": 219,
+        "edges": 213
+      },
+      "CPN_paper_LEAKY": {
+        "nodes": 3124,
+        "edges": 65335
+      },
+      "CPN": {
+        "nodes": 574,
+        "edges": 64046
+      }
+    },
+    "paper_matched": {
+      "TRN": {
+        "nodes": 1516,
+        "edges": 3190
+      },
+      "PPI": {
+        "nodes": 4235,
+        "edges": 412245
+      },
+      "KEGG": {
+        "nodes": 1358,
+        "edges": 54788
+      },
+      "CPN": {
+        "nodes": 574,
+        "edges": 64046
+      }
+    }
+  },
+  "parse_reports": {
+    "TRN": {
+      "sheet": "TRN",
+      "rows": 3489,
+      "kept": 3364,
+      "self_loops": 125,
+      "dropped": 0,
+      "dropped_tokens": []
+    },
+    "PPI": {
+      "sheet": "PPI",
+      "rows": 823098,
+      "kept": 822243,
+      "self_loops": 842,
+      "dropped": 13,
+      "dropped_tokens": [
+        "fhiA",
+        "rspJ",
+        "ycdF",
+        "rspU",
+        "aptD",
+        "pstI",
+        "wecG",
+        "yi81_3",
+        "citB",
+        "yigW_2"
+      ]
+    },
+    "KEGG": {
+      "sheet": "KEGG pathway",
+      "rows": 75333,
+      "kept": 75323,
+      "self_loops": 10,
+      "dropped": 0,
+      "dropped_tokens": []
+    },
+    "SIGMA": {
+      "sheet": "sigma factor network",
+      "rows": 8381,
+      "kept": 8377,
+      "self_loops": 4,
+      "dropped": 0,
+      "dropped_tokens": []
+    },
+    "SRNA": {
+      "sheet": "small RNA network",
+      "rows": 216,
+      "kept": 216,
+      "self_loops": 0,
+      "dropped": 0,
+      "dropped_tokens": []
+    },
+    "CPN_paper_LEAKY": {
+      "sheet": "CPN",
+      "rows": 70710,
+      "kept": 69849,
+      "self_loops": 848,
+      "dropped": 13,
+      "dropped_tokens": [
+        "fhiA",
+        "rspJ",
+        "ycdF",
+        "rspU",
+        "aptD",
+        "pstI",
+        "wecG",
+        "yi81_3",
+        "citB",
+        "yigW_2"
+      ]
+    }
+  },
+  "arms": {
+    "paper_matched": {
+      "TRN": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.15383985444723142,
+        "pcc_row_sd": 0.1624209356584307,
+        "n_rows": 5,
+        "rmse": 0.9184579070385145,
+        "calibration_slope": 0.031498012857443754,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 288,
+        "in_ensemble_mean": true
+      },
+      "PPI": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.25653374555540365,
+        "pcc_row_sd": 0.2697077689077231,
+        "n_rows": 5,
+        "rmse": 0.4909625728652781,
+        "calibration_slope": 0.08783438357116805,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 582,
+        "in_ensemble_mean": true
+      },
+      "KEGG": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.22144254835065383,
+        "pcc_row_sd": 0.2190242349518892,
+        "n_rows": 5,
+        "rmse": 0.6986748882231315,
+        "calibration_slope": 0.082999730126216,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 388,
+        "in_ensemble_mean": true
+      },
+      "CPN": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.19621861469081125,
+        "pcc_row_sd": 0.23638329426307822,
+        "n_rows": 5,
+        "rmse": 0.5461213155793249,
+        "calibration_slope": 0.013390884618931507,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 574,
+        "in_ensemble_mean": true
+      },
+      "ENSEMBLE": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.26447153531223455,
+        "pcc_row_sd": 0.30520258055589256,
+        "n_rows": 5,
+        "rmse": 0.48191996587865904,
+        "calibration_slope": 0.10508946268824813,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 588,
+        "in_ensemble_mean": false
+      }
+    },
+    "paper": {
+      "TRN": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.15383985444723142,
+        "pcc_row_sd": 0.1624209356584307,
+        "n_rows": 5,
+        "rmse": 0.9184579070385145,
+        "calibration_slope": 0.031498012857443754,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 288,
+        "in_ensemble_mean": true
+      },
+      "PPI": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.25653374555540365,
+        "pcc_row_sd": 0.2697077689077231,
+        "n_rows": 5,
+        "rmse": 0.4909625728652781,
+        "calibration_slope": 0.08783438357116805,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 582,
+        "in_ensemble_mean": true
+      },
+      "KEGG": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.22144254835065383,
+        "pcc_row_sd": 0.2190242349518892,
+        "n_rows": 5,
+        "rmse": 0.6986748882231315,
+        "calibration_slope": 0.082999730126216,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 388,
+        "in_ensemble_mean": true
+      },
+      "SIGMA": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.17464864224406795,
+        "pcc_row_sd": 0.22886377303812258,
+        "n_rows": 5,
+        "rmse": 1.1096625912663816,
+        "calibration_slope": 0.015176335938360588,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 566,
+        "in_ensemble_mean": true
+      },
+      "SRNA": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.6637395116776768,
+        "pcc_row_sd": 0.24800915047624278,
+        "n_rows": 4,
+        "rmse": 0.6618486507670552,
+        "calibration_slope": 0.0774052745495004,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 5,
+        "in_ensemble_mean": true
+      },
+      "CPN_paper_LEAKY": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.10790551255454613,
+        "pcc_row_sd": 0.13329385307622324,
+        "n_rows": 5,
+        "rmse": 1.100606899116778,
+        "calibration_slope": 0.016160708290290943,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 582,
+        "in_ensemble_mean": false
+      },
+      "CPN": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.19621861469081125,
+        "pcc_row_sd": 0.23638329426307822,
+        "n_rows": 5,
+        "rmse": 0.5461213155793249,
+        "calibration_slope": 0.013390884618931507,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 574,
+        "in_ensemble_mean": true
+      },
+      "ENSEMBLE": {
+        "pcc_mean": NaN,
+        "pcc_sd": NaN,
+        "pcc_sem": NaN,
+        "n": 0,
+        "frac_above_0.3": NaN,
+        "frac_above_0.5": NaN,
+        "pcc_row_mean": 0.2644581995106222,
+        "pcc_row_sd": 0.27040812711433854,
+        "n_rows": 5,
+        "rmse": 0.5093742970212076,
+        "calibration_slope": 0.08912164245890608,
+        "n_conditions_available": 5,
+        "pcc_column_suppressed": true,
+        "coverage": 588,
+        "in_ensemble_mean": false
+      }
+    }
+  },
+  "own_mrna_baseline": {
+    "pcc_mean": NaN,
+    "pcc_sd": NaN,
+    "pcc_sem": NaN,
+    "n": 0,
+    "frac_above_0.3": NaN,
+    "frac_above_0.5": NaN,
+    "pcc_row_mean": 0.08602141161763144,
+    "pcc_row_sd": 0.1855189527544763,
+    "n_rows": 5,
+    "rmse": 0.5756916266733015,
+    "calibration_slope": -0.03493125382524552,
+    "n_conditions_available": 5,
+    "pcc_column_suppressed": true
+  },
+  "excluded_from_mean": [
+    "CPN_paper_LEAKY"
+  ],
+  "retired_rung": {
+    "name": "scraped",
+    "note": "TRN/PPI/KEGG from live 2026 databases. Deleted 2026-08-12 with ecomics/networks.py:load_trn/load_ppi/load_kegg; cannot be re-run. Recorded values below are historical.",
+    "ensemble_pcc_row_mean": 0.1518,
+    "delta_graph_source": 0.1127,
+    "record": [
+      "results/all_layers_scraped_superseded.json",
+      "DISCREPANCIES.md section 5-7"
+    ]
+  },
+  "verdict": {
+    "ensemble_paper_matched": 0.26447153531223455,
+    "ensemble_paper": 0.2644581995106222,
+    "delta_extra_arms": -1.3335801612335274e-05,
+    "rmse_delta_extra_arms": 0.027454331142548583,
+    "within_noise": true,
+    "noise_threshold": 0.01,
+    "leak_value_vs_held_out_cpn": -0.08831310213626513,
+    "srna_coverage": 5
+  }
+}

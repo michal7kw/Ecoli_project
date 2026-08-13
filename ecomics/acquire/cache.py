@@ -20,7 +20,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 USER_AGENT = "ecomics-replication/0.1 (+https://doi.org/10.1038/ncomms13090)"
 TIMEOUT = 120
@@ -170,7 +170,3 @@ def gunzip(src: Path, dest: Path | None = None) -> Path:
         shutil.copyfileobj(fi, fo)
     return dest
 
-
-def iter_meta(paths: Iterable[Path]):
-    for p in paths:
-        yield p, read_meta(p)

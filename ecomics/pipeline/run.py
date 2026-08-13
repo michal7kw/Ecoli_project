@@ -15,7 +15,6 @@ compared against the paper's own (3,842 -> 3,581 x 4,589 -> 3,579 x 4,096).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import numpy as np
 

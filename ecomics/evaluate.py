@@ -60,7 +60,8 @@ from ecomics.metrics import (calibration_slope, evaluate_predictions,  # noqa: F
                              pcc_per_column, pcc_per_row, wilcoxon)
 
 __all__ = ["pcc_per_row", "pcc_per_column", "calibration_slope", "evaluate_predictions",
-           "wilcoxon", "loco_splits", "Baselines", "CVResult", "run_loco", "summarize"]
+           "wilcoxon", "loco_splits", "Baselines", "out_of_fold_baselines",
+           "CVResult", "run_loco", "summarize"]
 
 
 # --------------------------------------------------------------------------
@@ -158,6 +159,64 @@ class Baselines:
             # estimator is no longer stochastic at predict time.
             return np.tile(self.random_profiles[0], (n, 1))
         raise ValueError(f"unknown baseline {kind!r}")
+
+
+def out_of_fold_baselines(Y: np.ndarray, is_wildtype: np.ndarray,
+                          condition_keys: Sequence[str], *, seed: int = 0,
+                          min_train: int = 2) -> dict[str, np.ndarray]:
+    """The three baselines, predicted out of fold, for a layer with no model.
+
+    `run_loco` already does this as a side effect of cross-validating a model.
+    This exists for the layer that has no model to cross-validate: FBA needs no
+    training data, so `moma/fluxome.py` never enters the harness and would
+    otherwise be reported with no baseline at all. The cost of that omission is
+    large -- `pcc_row_mean` 0.843 reads as beating the paper's 0.72 until you
+    ask what a CONSTANT scores on the same 22 reactions, which is 0.896.
+
+    Held out per CONDITION, like everything else here: each row's baseline is
+    built from the rows of the OTHER conditions, so a condition's replicates
+    never inform its own baseline. Without that the mean baseline contains its
+    own test row and the bar is set too high.
+
+    `min_train` skips a fold that would leave fewer than that many training
+    rows. A mean over one profile is not a baseline.
+
+    ⚠ **The seed convention here differs from `run_loco`'s, deliberately.**
+    `run_loco` passes `seed + i` so each fold draws a different random sample;
+    this passes one `seed` to every fold. The difference is small -- 
+    `Baselines.fit` returns the AVERAGE of 1000 draws, not one draw
+    -- but it is not zero, so the two are not interchangeable at the last
+    decimal. This convention is the one the committed fluxome numbers were
+    computed with, and it is kept so that extracting this function moved no
+    reported value. Do not "unify" them without re-running and regenerating
+    `results/all_layers.json`.
+
+    `run_loco` does NOT call this: it must fit the model and the baselines in
+    one pass over the folds, and calling out here would iterate them twice.
+
+    ⚠ **`Y` is NOT upcast here, and that is a decision, not an oversight.**
+    `run_loco` opens with `Y = np.asarray(Y, float)`, and `db.matrix(...).values`
+    is **float32** for every layer -- so every layer evaluated through the
+    harness is scored in float64 while this one is scored in float32. Adding the
+    cast here changes each baseline by ~1.6e-7 relative (7e-6 absolute on fluxes
+    normalized to glucose = 100), which is invisible at three decimals but is a
+    real change to every float in `results/all_layers.json`'s `fluxome.baselines`
+    block. Extracting this function was required to move no reported number, so
+    the float32 arithmetic the committed run used is preserved verbatim. If the
+    asymmetry is ever resolved, resolve it in one deliberate change that
+    regenerates the record -- not as a side effect of touching this line.
+    """
+    Y = np.asarray(Y)
+    keys = np.asarray([str(k) for k in condition_keys])
+    out = {kind: np.full_like(Y, np.nan)
+           for kind in ("random", "mean", "wildtype")}
+    for tr, te in loco_splits(keys):
+        if tr.size < min_train or te.size == 0:
+            continue
+        base = Baselines.fit(Y[tr], np.asarray(is_wildtype)[tr], seed=seed)
+        for kind, arr in out.items():
+            arr[te] = base.predict(kind, len(te))
+    return out
 
 
 # --------------------------------------------------------------------------

@@ -45,11 +45,11 @@ The recurrent term was originally INERT here. After training, |w_y| averaged
 1.2e-11 against |w_x| at 3.2e-4 -- a ratio of 2.7e7 -- so y^(i) was effectively
 sigmoid(w_x x + b) and the model had degenerated to a feed-forward map. Memory
 depth did nothing, and the paper's three y^(0) strategies gave IDENTICAL
-predictions in scripts/05_prospective_ko.py.
+predictions on held-out knockouts.
 
 Two causes were plausible: w_y starts at exactly zero, and weight decay gives it
 no reason to grow once w_x already fits the training data. A 2x2 factorial
-(scripts/06_recurrence_experiment.py, one held-out fold) separated them:
+(one held-out fold) separated them:
 
     w_y init   decay on w_y    PCC     >0.3    final |w_y|   epochs
     zero       yes            0.1975   20.5%     1.2e-11       49
@@ -212,18 +212,25 @@ class RelaxationRNN:
         lr            THE dominant hyper-parameter, and the one that made the
                       first attempt fail. Measured on a held-out fold
                       (results/rnn_tuning2.json), against a ridge control of
-                      0.236 per-gene PCC:
+                      0.236 per-gene PCC from results/discrepancy_analysis.json:
 
                           lr=5e-2  ->  0.028   (the original setting)
                           lr=1e-2  ->  see rnn_tuning2.json
                           lr=1e-3  ->  0.214
-                          lr=3e-4  ->  0.267   <- beats the ridge control
+                          lr=3e-4  ->  0.267   <- beats that ridge control
 
                       At 5e-2 with Adam the model overfits inside one epoch --
                       early stopping fired at epoch 1-2 -- so nothing
                       condition-specific was ever learned. 3e-4 is ~3x slower to
                       converge (136 epochs) but is the only setting that beats a
-                      plain ridge regression.
+                      plain ridge regression on this fold.
+
+                      ⚠ Every figure above is ONE held-out fold at 756
+                      features. Under 5-fold LOCO at 603 features, plain ridge
+                      reaches 0.421 against this model's 0.186 and wins at every
+                      penalty swept -- so "beats a plain ridge regression" holds
+                      only within this fold and this encoder, and must not be
+                      quoted as a general claim.
 
         rank          Factorize w_y as U @ V.T with this inner dimension, instead
                       of a full 4096 x 4096 matrix. None keeps the full matrix.
@@ -277,7 +284,7 @@ class RelaxationRNN:
         self.patience = patience
         self.val_frac = val_frac
         self.early_stop_metric = early_stop_metric
-        # Two knobs for the inert-recurrence question (docs/implementation 17 1.3).
+        # Two knobs for the inert-recurrence question.
         # wy_init         scale of the random init for w_y's free factor. 0.0 is
         #                 the default: w_y == 0 exactly, so the first forward
         #                 pass reproduces the mean profile. Measured to be
@@ -289,7 +296,7 @@ class RelaxationRNN:
         #
         #                 It defaults on RelaxationRNN itself, not only on the
         #                 TranscriptomeModule wrapper, because callers construct
-        #                 this class directly (scripts/05_prospective_ko.py does)
+        #                 this class directly
         #                 and would otherwise silently get the broken behaviour.
         self.wy_init = wy_init
         self.wy_weight_decay = wy_weight_decay
@@ -794,7 +801,7 @@ def trn_adjacency(columns, path=None) -> np.ndarray:
     # through `idx.get`, so a change in the sheet's column order, or a switch
     # from b-numbers to gene symbols, matches nothing -- and every downstream
     # step still "works": `svds` of a zero matrix succeeds, `w_y` is seeded with
-    # zeros, and `scripts/10_trn_seeded_recurrence.py` ends up comparing the
+    # zeros, and a TRN-seeded run ends up comparing the
     # unseeded control against itself while reporting "the biology buys
     # nothing". A wrong answer that looks like a finding.
     if n == 0:

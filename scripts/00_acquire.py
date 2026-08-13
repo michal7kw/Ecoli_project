@@ -10,13 +10,28 @@ What this collects and why:
   prokaryomics.com   the ONLY public source for the fluxome (43 x 120) and
                      phenome (253 conditions) layers, plus the meta-data
                      ontology (65 strains x 152 features, 112 media x 120)
-  RegulonDB TRN      proteome module, TRN predictor
-  STRING PPI         proteome module, PPI predictor
-  KEGG pathways      proteome module, pathway predictor
+  KEGG gene list     gene SYMBOL -> b-number, so every source shares one
+                     identifier space; db/build.py asserts against it
   BiGG iJO1366       fluxome module, FBA
   GEO GSE73673       the paper's own 16-knockout RNA-Seq, as htseq counts
   GEO GSE12411       raw Affymetrix CEL files, for the from-scratch RMA
   CDF layout         probe-set -> array-cell map, exported once via R
+  supplementary ZIP  the paper's own Methods and Data 1/2/4/5/8, from Europe PMC
+
+WHAT THIS DELIBERATELY DOES NOT FETCH. Three more downloads could build the
+proteome module's TRN, PPI and KEGG graphs: RegulonDB via SBRG's PRECISE mirror,
+STRING v12, and the KEGG pathway REST endpoint. The paper's OWN edge lists are in
+Supplementary Data 2 -- already on disk from the last item above -- and swapping
+to them was worth +0.113 per-profile PCC, so the scraped graphs stopped being a
+source and became a second, worse way to do the same thing. They were deleted
+from `config.REMOTE` with `networks.load_trn` / `load_ppi` / `load_kegg`;
+`ecomics/networks_paper.py` is now the only graph loader.
+
+`kegg_gene_list` STAYS and is NOT a network -- `networks.gene_symbol_map` reads
+it, `db/build.py` asserts against it when normalizing perturbations,
+`paper_protocol.py` needs it for the paper's TF subset, and `networks_paper.py`
+uses it to repair Data 2's handful of non-b-number tokens. Removing it breaks the
+build, not the proteome.
 """
 
 from __future__ import annotations
@@ -102,7 +117,7 @@ def main() -> int:
     scrape.scrape(force=args.force)
 
     print("\n" + "=" * 70)
-    print("2. interaction networks and metabolic model")
+    print("2. KEGG gene list and metabolic model")
     print("=" * 70)
     fetch.fetch_networks(force=args.force)
 
@@ -126,7 +141,7 @@ def main() -> int:
     print("6. the paper's supplementary material (Europe PMC, CC-BY, ~31 MB)")
     print("   Supplementary Methods 3.3.3 states the evaluation protocol;")
     print("   Supplementary Data 1 carries the growth phase the released")
-    print("   expression table omits. See DISCREPANCIES.md 3.")
+    print("   expression table omits entirely.")
     print("=" * 70)
     fetch.fetch_supplementary(force=args.force)
 

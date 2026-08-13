@@ -1,55 +1,9 @@
-# --------------------------------------------------------------------------
-# Data (872 MB) -- deliberately NOT tracked.
-#
-# Everything under data/ is either a user-supplied input or a derived artefact
-# that scripts/00_acquire.py and scripts/01_build_db.py rebuild from scratch:
-#
-#   Ecomics.*.{txt,csv}   the published release (259 MB), from the Ecomics
-#                         Dropbox linked at http://prokaryomics.com/download
-#   external/             scraped + downloaded resources (189 MB)
-#   ecomics.db            the built SQLite compendium (347 MB)
-#   parquet/              wide matrices mirrored for fast loading (78 MB)
-# --------------------------------------------------------------------------
 data/
 data.zip
 
-# Large or regenerable outputs. The per-layer metrics ARE tracked -- they are
-# the result of record: pipeline_validation.json, transcriptome_loco.json,
-# methods_faithful_eval.json and proteome_loco.json.
 results/*.npz
 results/*.log
 results/*.png
-
-# --------------------------------------------------------------------------
-# Code not reachable from scripts/ -- kept locally, not published.
-#
-# This file IS the scope statement for this repository. Adding or removing a
-# line here publishes or unpublishes code; it is not housekeeping.
-#
-#   plots.py, figures/   the figure atlas. Its entry point upstream is
-#                        scripts/15_figures.py, which is not part of this
-#                        subset, so the registry has no caller here. ~2,375
-#                        lines.
-#   moma/{fluxome,metabolome,phenome}.py
-#                        three of the five omics layers -- the rest of the
-#                        paper's cascade beyond the transcriptome and the
-#                        proteome. ~1,266 lines.
-#
-# moma/_lasso.py and moma/proteome.py were published on 2026-08-12 together
-# with scripts/04_proteome.py. _lasso.py is shared with the unpublished
-# metabolome; it has no reverse dependency on it.
-#
-# moma/__init__.py stays tracked, and keeps re-exporting ONLY transcriptome:
-# Python executes it on any `ecomics.moma.*` import, so a proteome re-export
-# there would drag _lasso and sklearn into every transcriptome run. Import the
-# proteome from its own module instead.
-#
-# --------------------------------------------------------------------------
-ecomics/plots.py
-ecomics/figures/
-ecomics/moma/fluxome.py
-ecomics/moma/metabolome.py
-ecomics/moma/phenome.py
 
 # Python
 __pycache__/
@@ -69,5 +23,9 @@ venv/
 .obsidian/
 .DS_Store
 Thumbs.db
+
 INFO-CARD.md
-docs/04-reproduce.md
+offical-notes/
+results/figures/
+docs/
+*_original*

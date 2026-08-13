@@ -81,11 +81,6 @@ class GaussianMixtureNoise:
         out = x - self.responsibility(x) * self.mu_noise
         return out if floor is None else np.maximum(out, floor)
 
-    def as_dict(self) -> dict:
-        return {k: getattr(self, k) for k in
-                ("mu_noise", "sd_noise", "pi_noise", "mu_signal", "sd_signal",
-                 "pi_signal", "n_iter", "loglik", "converged")}
-
 
 def fit_mixture(values: np.ndarray, anchor_idx: np.ndarray | None = None,
                 max_iter: int = 200, tol: float = 1e-6,

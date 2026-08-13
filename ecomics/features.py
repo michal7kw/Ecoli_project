@@ -27,20 +27,31 @@ sizes the encoder ACTUALLY emits:
                             Supplementary Data 1's Stress sheet, which lists 62;
                             the 4 missing are ones the compendium never
                             observes. The paper's prose says 52.
-    296  perturbation       distinct (gene, type) perturbations observed
+    273  perturbation       distinct (gene, type) perturbations observed. This
+                            read 296 before the fluxome's
+                            genotypes -- written as upper-case gene SYMBOLS
+                            where every other layer writes b-numbers -- were
+                            normalized in `db/canon.py`, and 23 of the columns
+                            turned out to be the same perturbation twice.
     ---
-    626
+    603
 
 Every remaining gap to the paper's 612 is now a COUNTING difference -- observed
 values against the paper's own categorization -- not a design difference:
 -2 strain (152 vs 154, and ours is the derivable one), +6 stress (58 vs 52),
-+10 perturbation (296 vs 286).
+-13 perturbation (273 vs 286), medium matching exactly.
+
+⚠ Do not hard-code this block anywhere. It has been wrong in a generated file
+once already: `scripts/04_reproduce.py` printed "626 features ... 296
+perturbation" into `results/reproduction_table.md` as a string literal, and it
+stayed there through the 296 -> 273 correction because nothing recomputes a
+sentence. That script now derives the line from `build_encoder`.
 
 History, because both previous values are quoted in older prose. This block
 once read "120 medium / 69 stress" and summed to 637, matching nothing. It then
 read 240 medium / 68 stress and summed to **756**, which is the number in
-`README.md`, `docs/11-reproduction.md`, `DISCREPANCIES.md` and every results
-file written before 2026-08-11. 756 came from two choices since reverted:
+any results file written under the earlier encoding. 756 came from two
+choices since reverted:
 `medium_kind="both"` (presence AND amount, doubling the medium block) and
 one-hot over ';'-joined stress combinations. See `fit` for why each changed.
 
@@ -76,16 +87,24 @@ FEATURE_COUNT_NOTE = (
     "own published ontology. Medium components match exactly at 120."
 )
 
-# Under the default encoding, 23 of 596 transcriptome conditions (3.9%) fall
-# into 11 groups that encode identically. Such conditions cannot be told apart
-# by any model and do not fully separate under leave-one-condition-out.
+# Conditions that encode identically cannot be told apart by any model, and do
+# not fully separate under leave-one-condition-out. Measured
+# against a built database:
 #
-# Measured 2026-08-11 against a built database, and BOTH numbers moved that day:
-# they were 15 conditions in 7 groups under the previous default
-# (`medium_kind="both"`), which spent 120 extra features to separate four media
-# pairs that differ only in concentration. Reverting to the paper's 120-wide
-# medium block gives those four back. That is the trade, stated plainly, and it
-# was made deliberately -- see `fit`.
+#                             transcriptome (596)      every layer (674)
+#   medium_kind='present'     19 in  9 groups (3.2%)   23 in 11 groups (3.4%)
+#   medium_kind='both'        11 in  5 groups (1.8%)   11 in  5 groups (1.6%)
+#
+# ALWAYS SAY WHICH CONDITION SET. This block once read
+# "23 of 596 transcriptome conditions (3.9%) in 11 groups" -- the count from the
+# all-layer row against the denominator from the transcriptome row, and a
+# percentage matching neither. It propagated verbatim into six documents. The
+# numbers were each individually real, which is exactly why nobody caught the
+# pairing; a collision count is meaningless without the set it was counted over.
+#
+# The 'both' row is the trade the paper's 120-wide medium block costs: 120 extra
+# features separate four media pairs differing only in concentration. Reverting
+# to the paper's width gives those four back. Taken deliberately -- see `fit`.
 #
 # This block also once claimed every group was a "limit of the PUBLISHED
 # ontology, not an encoder bug". Only one of the four causes is.
@@ -145,7 +164,7 @@ FEATURE_COUNT_NOTE = (
 #   resolving it needs a per-medium rule keyed on whether the base medium is
 #   rich or defined-minimal -- a judgement this repo has not made. Left as-is,
 #   with the three wrong collisions documented rather than half-fixed. Tracked
-#   in docs/implementation/17-open-issues.md.
+#   as a known limit of the published ontology.
 #
 #   `medium_kind="both"` never separated these either: `numeric()` imputes the
 #   NULL onto the component median, and 116 of the 120 medians are 0.0.
@@ -405,10 +424,13 @@ class ConditionEncoder:
             "",
             "  Counts differ from the paper because ours are OBSERVED values "
             "(58 atomic",
-            "  stressors, 296 distinct perturbations in the published files) "
-            "while the paper",
-            "  reports its own categorization (52 stress categories, 286 "
-            "perturbations).",
+            "  stressors; 296 distinct perturbations appear in the published "
+            "files, which",
+            "  become 273 columns once the fluxome's gene SYMBOLS are "
+            "normalized to",
+            "  b-numbers and 23 prove to be duplicates) while the paper reports "
+            "its own",
+            "  categorization (52 stress categories, 286 perturbations).",
             "  All 58 appear in Supplementary Data 1's Stress sheet, which "
             "lists 62; the 4",
             "  it names that we never observe make up the difference. Every "

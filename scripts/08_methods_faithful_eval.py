@@ -9,7 +9,7 @@ For most of this reproduction the transcriptome comparison read "ours 0.295
 versus the paper's 0.54", and the paper's baselines (0.25/0.26/0.36) could not be
 reproduced at all -- ours came out at -0.017/-0.106/-0.101. Since a baseline has
 no free parameters, that had to be a difference in WHAT THE NUMBER IS COMPUTED
-OVER, and it made every "paper vs ours" comparison unsafe (DISCREPANCIES.md 3).
+OVER, and it made every "paper vs ours" comparison unsafe.
 
 The Supplementary Methods (ncomms13090-s1.pdf, Section 3.3.3) states all four
 choices outright. None of them were guessable from the article body:
@@ -51,7 +51,6 @@ opposite of what "0.295 versus 0.54" suggested.
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from pathlib import Path
@@ -63,55 +62,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from ecomics import config as C                              # noqa: E402
 from ecomics.db.api import Ecomics                           # noqa: E402
 from ecomics.metrics import pcc_per_row                      # noqa: E402
-from ecomics.networks import gene_symbol_map                 # noqa: E402
+from ecomics.paper_protocol import (                         # noqa: E402
+    BASELINE_KINDS, PAPER, growth_phase, lb_or_m9_media, tf_indices,
+)
 
-PAPER = {"moma": 0.54, "random": 0.25, "mean": 0.26, "wildtype": 0.36,
-         "tf_moma": 0.68, "tf_random": 0.41, "tf_mean": 0.41, "tf_wildtype": 0.40,
-         "n_profiles": 2610, "n_conditions": 493, "n_testable": 262}
-KINDS = ("random", "mean", "wildtype")
-
-
-def tf_indices(columns: list[str]) -> np.ndarray:
-    path = C.REMOTE_FILES.get("regulondb_tf_gene")
-    if path is None or not path.exists():
-        return np.array([], dtype=int)
-    names = {r["regulator"].strip().lower()
-             for r in csv.DictReader(path.open(encoding="utf-8"))}
-    s2b = gene_symbol_map()
-    tfb = {s2b[n] for n in names if n in s2b}
-    return np.array([i for i, c in enumerate(columns) if c in tfb], dtype=int)
-
-
-def lb_or_m9_media() -> set[str]:
-    """Medium IDs whose base medium is LB or M9, any carbon source."""
-    path = C.PROK_DIR / "medium.json"
-    out = set()
-    for m in json.loads(path.read_text(encoding="utf-8")):
-        for field in ("Base Medium", "Description"):
-            if (m.get(field) or "").strip().upper().startswith(("LB", "M9")):
-                out.add(m["ID"])
-                break
-    return out
-
-
-def growth_phase(db: Ecomics, profile_ids: np.ndarray) -> np.ndarray:
-    """Per-profile exponential-phase mask, from Supplementary Data 1.
-
-    The released expression table carries no growth phase, so this is the one
-    piece of the paper's protocol that CANNOT be reconstructed without the
-    supplementary material.
-    """
-    import pandas as pd
-
-    path = C.SUPPLEMENTARY["metadata"]
-    if not path.exists():
-        raise SystemExit(f"missing {path}\nRun: python scripts/00_acquire.py")
-    src = {r["id"]: r["source_id"] for r in db.conn.execute(
-        "SELECT id, source_id FROM profile WHERE layer='transcriptome'")}
-    meta = pd.read_excel(path, sheet_name="Transcriptome")
-    phase = dict(zip(meta["ID"].astype(str), meta["Growth Phase"].astype(str)))
-    return np.array([phase.get(src.get(int(p), ""), "").lower()
-                     .startswith(("exp", "mid-exp")) for p in profile_ids])
+# The protocol itself now lives in `ecomics/paper_protocol.py`, so this script
+# and `scripts/16` cannot drift apart on what "the paper's protocol" means. It
+# used to live here, and `scripts/16` imported it by mutating sys.path and
+# calling importlib on a module name beginning with a digit.
+KINDS = BASELINE_KINDS
 
 
 def main() -> int:
@@ -126,8 +85,8 @@ def main() -> int:
 
     cache = C.RESULTS / "transcriptome_predictions.npz"
     if not cache.exists():
-        raise SystemExit(f"missing {cache}\nRun: python scripts/07_baseline_"
-                         "calibration.py --refit")
+        raise SystemExit(f"missing {cache}\n"
+                         "Run: python scripts/03_train_moma.py")
     d = np.load(cache, allow_pickle=True)
     Y, P, keys = d["y_true"], d["y_pred"], d["condition_keys"]
 
@@ -180,8 +139,28 @@ def main() -> int:
         r = pcc_per_row(A[:, idx], B[:, idx])
         return float(np.nanmean(r)), float(np.nanstd(r))
 
+    # `n_features` is recorded because THIS script is where staleness hid: it
+    # scores a CACHED npz, so re-running scripts/03 does not refresh it, and on
+    # The headline 0.578 turned out to be a 756-feature run quoted in
+    # twelve documents. Nothing detected it, because the JSON and the prose
+    # agreed with each other. A width in the file makes the mismatch checkable --
+    # every results file records its encoder width for this reason.
+    #
+    # `n_tf` is recorded for the same reason, one field later. DOC-AUDIT's T11
+    # was reopened for want of "a results file recording a
+    # paper-176-TF score", and could not be settled either way from this file:
+    # it reports `tf_pcc` but never said WHICH list produced it, so 0.5539 was
+    # indistinguishable from a 200-TF number. The set moved from a RegulonDB
+    # mirror (200) to the paper's own list (176) and the score
+    # moved with it, by +0.0009 -- small enough to hide, large enough to matter
+    # to a claim about reproducing Fig. 5b's `TFs (176)` label.
+    from ecomics.features import build_encoder
     out = {"n_profiles": int(exp.sum()), "n_conditions": int(len(uniq)),
-           "n_wt_profiles": int(wt.sum()), "paper": PAPER, "ours": {}}
+           "n_wt_profiles": int(wt.sum()),
+           "n_features": int(build_encoder(db).n_features),
+           "n_tf": int(len(tf)),
+           "random_draws": int(n_random_draws),
+           "paper": PAPER, "ours": {}}
     print(f"{'predictor':<14s} {'ours (all)':>16s} {'paper':>8s} | "
           f"{'ours (TFs)':>16s} {'paper':>8s}")
     print("-" * 70)

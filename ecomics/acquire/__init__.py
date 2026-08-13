@@ -3,7 +3,7 @@
   scrape.py  prokaryomics.com  -> strain/medium/molecule/reaction JSON,
                                   plus the fluxome and phenome datasets that
                                   are embedded inline in the page HTML
-  fetch.py   RegulonDB / STRING / KEGG / BiGG / GEO
+  fetch.py   KEGG gene list / BiGG / GEO / the supplementary ZIP
   cache.py   idempotent, checksummed downloads
 """
 

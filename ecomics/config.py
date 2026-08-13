@@ -6,11 +6,14 @@ full data footprint in one place and no module hard-codes a path.
 Layout under REPO:
     data/                        the four published Ecomics files (NEVER modified)
     data/external/prokaryomics/  scraped from prokaryomics.com
-    data/external/networks/      RegulonDB (TRN), STRING (PPI), KEGG (pathways)
+    data/external/networks/      the KEGG gene list (symbol -> b-number) only;
+                                 the interaction graphs come from Data 2
     data/external/models/        BiGG iJO1366 genome-scale metabolic model
     data/external/raw/           raw microarray / RNA-Seq samples for the pipeline demo
     data/ecomics.db              the built SQLite compendium
     data/parquet/                wide numeric matrices, for fast model loading
+    curation/                    hand-curated inputs -- TRACKED, since nothing
+                                 regenerates them (see curation/README.md)
     results/                     metrics, reproduction table, figures
 """
 
@@ -45,6 +48,22 @@ TRANSCRIPTOME_TXT = DATA / "Ecomics.transcriptome.no_avg.v8.txt"
 PROTEOME_CSV = DATA / "Ecomics.proteome.v5.csv"
 METABOLOME_CSV = DATA / "Ecomics.metabolome.v3.csv"
 DATA_README = DATA / "README.txt"
+
+# --------------------------------------------------------------------------
+# curation/ -- hand-curated inputs, tracked rather than under data/
+# --------------------------------------------------------------------------
+# Everything under data/ is untracked and regenerable from 00_acquire +
+# 01_build_db. These are neither: they arrived from outside the project and no
+# script reproduces them, so an untracked copy would be unrecoverable and any
+# number read from one would have no provenance. They live here instead.
+#
+# The workbook is the source of record; the TSV is what documentation and code
+# should read, because a binary cannot be diffed or quoted. `tools/extract_
+# catalog.py` regenerates the second from the first and `--check` asserts they
+# agree.
+CURATION = REPO / "curation"
+PERTURBATION_CATALOG = CURATION / "Ecoli_K12_perturbation_omics_catalog.xlsx"
+PERTURBATION_CATALOG_TSV = CURATION / "catalog_entries.tsv"
 
 ALL_DIRS = [EXTERNAL, PROK_DIR, NET_DIR, MODEL_DIR, RAW_DIR, SUPP_DIR,
             PARQUET_DIR, RESULTS]
@@ -97,37 +116,23 @@ PROK_EXPECTED = {
 # --------------------------------------------------------------------------
 # External network / model resources
 # --------------------------------------------------------------------------
-# NCBI taxonomy 511145 = Escherichia coli str. K-12 substr. MG1655.
-STRING_TAXON = "511145"
-
+# ⚠ THERE ARE NO INTERACTION-NETWORK DOWNLOADS HERE, DELIBERATELY.
+#
+# The proteome module's TRN, PPI and KEGG graphs could be scraped from RegulonDB,
+# STRING and the KEGG pathway API. They are not. The paper's OWN edge lists ship
+# in Supplementary Data 2, already on disk, and using them instead is worth
+# +0.113 per-profile PCC -- so a scraped graph would be a second, worse way to
+# build the same thing. `ecomics/networks_paper.py` is the only graph loader.
+#
+# `kegg_gene_list` STAYS, and is not a network: `networks.gene_symbol_map()`
+# reads it to map gene SYMBOLS onto b-numbers, which `db/build.py` asserts
+# against when normalizing perturbations, `paper_protocol.py` needs for the
+# paper's TF subset, and `networks_paper.py` uses to repair Data 2's handful of
+# non-b-number tokens. Removing it breaks the build, not the proteome.
 REMOTE = {
-    # --- Transcriptional regulatory network ---
-    # The paper used RegulonDB directly. As of 2026 regulondb.ccg.unam.mx is a
-    # single-page app that answers EVERY path -- including the old
-    # /menu/download/datasets/files/network_tf_gene.txt -- with a 1,653-byte
-    # HTML shell, so the historical bulk endpoints are unusable from a script.
-    # We therefore use SBRG's PRECISE mirror of the RegulonDB TF-gene network:
-    # 8,325 interactions over 237 regulators, targets already keyed by
-    # b-number, which is exactly Ecomics' gene identifier. Scale is comparable
-    # to the paper's TRN (3,809 TF events + 8,381 sigma-factor events).
-    "regulondb_tf_gene": [
-        "https://raw.githubusercontent.com/SBRG/precise-db/master/data/TRN.csv",
-    ],
-    # KEGG gene list, used to map TRN regulator gene NAMES (rpoD, crp, arcA)
-    # onto b-numbers so regulators and targets share one identifier space.
+    # KEGG gene list -- gene NAMES (rpoD, crp, arcA) -> b-numbers, so every
+    # source in the repo shares one identifier space.
     "kegg_gene_list": ["https://rest.kegg.jp/list/eco"],
-    # --- Protein-protein interactions ---
-    "string_links": [
-        f"https://stringdb-downloads.org/download/protein.links.v12.0/{STRING_TAXON}.protein.links.v12.0.txt.gz",
-        f"https://stringdb-static.org/download/protein.links.v11.5/{STRING_TAXON}.protein.links.v11.5.txt.gz",
-    ],
-    "string_info": [
-        f"https://stringdb-downloads.org/download/protein.info.v12.0/{STRING_TAXON}.protein.info.v12.0.txt.gz",
-        f"https://stringdb-static.org/download/protein.info.v11.5/{STRING_TAXON}.protein.info.v11.5.txt.gz",
-    ],
-    # --- KEGG pathway membership (REST API, plain text, two columns) ---
-    "kegg_pathway_gene": ["https://rest.kegg.jp/link/eco/pathway"],
-    "kegg_pathway_list": ["https://rest.kegg.jp/list/pathway/eco"],
     # --- The paper's own supplementary material ---
     # CC-BY, open access. Europe PMC serves every supplementary file as one ZIP
     # and, unlike PMC's own /bin/ paths, does not gate on User-Agent -- PMC
@@ -137,8 +142,9 @@ REMOTE = {
     #
     # Worth having because it settles things the article body does not:
     # Supplementary Methods 3.3.3 states the evaluation axis and the data scale
-    # (see DISCREPANCIES.md 3), and Supplementary Data 1 carries the per-profile
-    # growth phase that defines the paper's 2,610-profile exponential subset.
+    # and Supplementary Data 1 carries the per-profile growth phase that defines
+    # the paper's 2,610-profile exponential subset -- a column the released
+    # expression table omits entirely.
     "supplementary_zip": [
         "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC5059772/supplementaryFiles",
     ],
@@ -151,12 +157,7 @@ REMOTE = {
 
 # Local filenames for the above.
 REMOTE_FILES = {
-    "regulondb_tf_gene": NET_DIR / "regulondb_trn.csv",
     "kegg_gene_list": NET_DIR / "kegg_eco_gene_list.tsv",
-    "string_links": NET_DIR / f"string_{STRING_TAXON}.protein.links.txt.gz",
-    "string_info": NET_DIR / f"string_{STRING_TAXON}.protein.info.txt.gz",
-    "kegg_pathway_gene": NET_DIR / "kegg_eco_pathway_gene.tsv",
-    "kegg_pathway_list": NET_DIR / "kegg_eco_pathway_list.tsv",
     "bigg_ijo1366": MODEL_DIR / "iJO1366.json",
     "supplementary_zip": SUPP_DIR / "europepmc_supplementary.zip",
 }
@@ -254,8 +255,8 @@ EXPECTED_OVERLAP = {
     ("transcriptome", "fluxome"): 3,
     ("transcriptome", "phenome"): 179,
     ("proteome", "metabolome"): 25,
-    # Added 2026-08-11. These three were NOT asserted before, and that is
-    # exactly why a real join bug survived: the fluxome writes perturbations as
+    # These three fluxome pairs are asserted because a real join bug once hid
+    # in their absence: the fluxome writes perturbations as
     # upper-case gene symbols (TALB(KO)) while every other layer writes
     # b-numbers (b0008(KO)), so only the wild-type conditions -- the ones with
     # no gene name to disagree about -- ever matched. The five pairs above were
