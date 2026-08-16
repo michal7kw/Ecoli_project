@@ -24,18 +24,18 @@ paper's 0.55 invites a comparison the sample size cannot support. Those cells no
 
 | layer | metric | this reproduction | paper | note |
 |---|---|---|---|---|
-| transcriptome | PCC, all genes | 0.186 | 0.54 +/- 0.15 | 3,578 profiles, 596 conditions |
+| transcriptome | PCC, all genes | 0.222 | 0.54 +/- 0.15 | 3,578 profiles, 596 conditions |
 | transcriptome | PCC, random baseline | -0.100 | 0.25 | a constant predictor scores ~0 on this axis; see below |
 | transcriptome | PCC, mean baseline | -0.106 | 0.26 | a constant predictor scores ~0 on this axis; see below |
 | transcriptome | PCC, wildtype baseline | -0.101 | 0.36 | a constant predictor scores ~0 on this axis; see below |
-| transcriptome | PCC, TFs | 0.177 | 0.68 +/- 0.14 | 176 transcription factors |
+| transcriptome | PCC, TFs | 0.210 | 0.68 +/- 0.14 | 176 transcription factors |
 | proteome | PCC, ensemble | n/a (5 cond) | 0.55 +/- 0.26 | 589 averaged proteins, not 1,001 individual profiles |
 | proteome | coverage | 588/589 | 1001/1001 | union of 6 networks (the paper's own, Supplementary Data 2) |
 | proteome | PCC, own-mRNA baseline | n/a (5 cond) | 0.34 +/- 0.18 | |
 | metabolome | PCC, core from protein | 0.360 | 0.65 +/- 0.21 | 25 shared conditions |
 | metabolome | PCC, non-core from transcript | n/a (6 cond) | 0.87 +/- 0.15 | only 6 shared conditions |
-| phenome | PCC, consensus | 0.602 | 0.65 +/- 0.01 | 179 conditions with growth; the paper CV'd over 101 |
-| phenome | PCC, input layer only | 0.618 | ~0.59 | |
+| phenome | PCC, consensus | 0.607 | 0.65 +/- 0.01 | 179 conditions with growth; the paper CV'd over 101 |
+| phenome | PCC, input layer only | 0.622 | ~0.59 | |
 
 ## What reproduced, and what did not
 
@@ -51,7 +51,7 @@ paper's 0.55 invites a comparison the sample size cannot support. Those cells no
 
 **The transcriptome, and which axis it is read on.**
 
-- On the PUBLISHED scale, per molecule, MOMA reaches 0.186 against baselines of -0.100 / -0.106 / -0.101. A constant predictor scores ~0 on this axis by construction, so the margin is unambiguous -- but the number is NOT comparable to the paper's 0.54.
+- On the PUBLISHED scale, per molecule, MOMA reaches 0.222 against baselines of -0.100 / -0.106 / -0.101. A constant predictor scores ~0 on this axis by construction, so the margin is unambiguous -- but the number is NOT comparable to the paper's 0.54.
 - **The paper's own axis is per profile**, against the condition-averaged truth, on per-gene min-max values, over exponential-phase profiles only (Supplementary Methods 3.3.3). None of those four choices is stated in the article body. Applying all four, the same model with no code change scores **0.544 against the paper's 0.54** -- see `scripts/08_methods_faithful_eval.py` and `results/methods_faithful_eval.json`.
 - What remains open is the BASELINE LEVEL, not the model: under the paper's protocol ours come out near 0.53 where the paper reports 0.25/0.26/0.36. A baseline has no free parameters, so that gap cannot be a modelling difference -- it is a difference in what the baseline is computed over.
 
