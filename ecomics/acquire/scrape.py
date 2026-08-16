@@ -39,6 +39,58 @@ def _strip_ids(records: list[dict]) -> list[dict]:
     return [{k: v for k, v in r.items() if k != "_id"} for r in records]
 
 
+def merge_duplicate_columns(pairs: list[tuple[str, object]]) -> dict:
+    """`object_pairs_hook` that collapses a repeated column instead of dropping it.
+
+    JSON permits a repeated key and `json.loads` keeps the LAST one, silently.
+    That is a data loss, not a formatting detail: `strain.v5.json` serves 159
+    columns per record, three of them twice — b4348 (hsdS), b0243 (proA) and
+    b4346 (mcrB) — so a plain parse yields 156 keys and six cells that read
+    "marker absent" when the source says otherwise.
+
+    The duplication is upstream, not a scrape artefact: Supplementary Data 1's
+    own Strain sheet has the same three names twice (155 non-meta column
+    positions, 152 distinct). It records those loci in two places, once as a
+    point allele and once as part of a multi-gene deletion —
+
+        JA122   b4348 = ['hss1',   'no']        MC1000  b4346 = ['mcrB1', 'no']
+        D31     b0243 = ['proA23', 'no']        TOP10   b4348 = ['no', 'hsdS-']
+        AB1157  b0243 = ['proA-',  'proA-']     TOP10   b4346 = ['no', 'mcrB-']
+
+    — and that sheet's `Comments` column names the deletions the right-hand
+    spellings come from: TOP10 `delta(mrr-hsdRMS-mcrBC)` spans hsdS and mcrB,
+    AB1157 `delta(gpt-proA)62` spans proA. Both spellings assert the same
+    thing, that the locus is disrupted, which is what makes merging correct
+    rather than convenient: they are two routes to one fact, not two facts.
+
+    So take the single informative value, and RAISE if the repeats disagree on
+    what it is. Choosing between two genuine alleles is exactly the judgement
+    this must not make silently — the same failure, one layer up.
+    """
+    out: dict = {}
+    repeated: dict[str, list] = {}
+    for key, value in pairs:
+        if key in out:
+            repeated.setdefault(key, [out[key]]).append(value)
+        else:
+            out[key] = value
+
+    for key, values in repeated.items():
+        informative = [v for v in values
+                       if str(v).strip().lower() not in C.ABSENT_TOKENS]
+        distinct = {str(v).strip() for v in informative}
+        if len(distinct) > 1:
+            raise ValueError(
+                f"column {key!r} appears {len(values)} times with conflicting "
+                f"values {sorted(distinct)}. The merge rule assumes repeated "
+                "columns record one locus two ways; it cannot choose between "
+                "two different alleles. Inspect the source before proceeding."
+            )
+        # All-absent repeats collapse to the value already there.
+        out[key] = informative[0] if informative else values[0]
+    return out
+
+
 def extract_embedded(html: str, page: str) -> list[dict]:
     """Pull the `var x = [...]` dataset out of a prokaryomics page."""
     m = _EMBEDDED_RE.search(html)
@@ -48,7 +100,7 @@ def extract_embedded(html: str, page: str) -> list[dict]:
             "have changed; inspect the HTML by hand before trusting any fallback."
         )
     try:
-        records = json.loads(m.group(1))
+        records = json.loads(m.group(1), object_pairs_hook=merge_duplicate_columns)
     except json.JSONDecodeError as exc:
         raise ValueError(f"/{page}: embedded payload is not valid JSON: {exc}") from exc
     if not isinstance(records, list) or not records:
@@ -102,7 +154,8 @@ def scrape(force: bool = False, verbose: bool = True) -> dict[str, Path]:
         dest_raw = raw_dir / filename
         download(f"{C.PROK_BASE}/{filename}", dest_raw, insecure=True,
                  force=force, min_bytes=200)
-        records = _normalize_table(load_json(dest_raw))
+        records = _normalize_table(
+            load_json(dest_raw, object_pairs_hook=merge_duplicate_columns))
         dest = C.PROK_DIR / f"{name}.json"
         save_json(records, dest)
         out[name] = dest
@@ -136,6 +189,14 @@ def _assert_expected(paths: dict[str, Path]) -> None:
         got = len(load_json(paths[name]))
         if got != expected:
             problems.append(f"{name}: got {got} records, expected {expected}")
+
+    for name, expected in C.PROK_EXPECTED_COLUMNS.items():
+        if name not in paths:
+            continue
+        records = load_json(paths[name])
+        got = len(records[0]) if records else 0
+        if got != expected:
+            problems.append(f"{name}: got {got} columns, expected {expected}")
     if problems:
         raise AssertionError(
             "prokaryomics returned unexpected data:\n  " + "\n  ".join(problems)

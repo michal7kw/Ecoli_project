@@ -35,8 +35,10 @@ from ecomics.db.canon import ConditionKey, make_key, parse_transcriptome_cond, s
 STRAIN_META = {"Strain Name", "Link", "PMID", "Alternate Names"}
 MEDIUM_META = {"ID", "Base Medium", "Description", "Link", "PMID", "Defined"}
 
-# Values in the strain table meaning "marker absent".
-ABSENT = {"no", "none", "na", "", "-", "?"}
+# Values in the strain table meaning "marker absent". Defined in config because
+# acquire/scrape.py needs the same set to merge the strain endpoint's repeated
+# columns, and two copies of a six-token convention would drift.
+ABSENT = C.ABSENT_TOKENS
 
 # "328mM" / "0.40%" / "100ug/mL" / "1mg/L" / "8.2 mM"
 _AMOUNT_RE = re.compile(r"^\s*([0-9]*\.?[0-9]+)\s*([a-zA-Z%/]*)\s*$")

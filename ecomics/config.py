@@ -76,6 +76,19 @@ def ensure_dirs() -> None:
 
 
 # --------------------------------------------------------------------------
+# Source-data conventions
+# --------------------------------------------------------------------------
+# Cell values in the scraped ontology tables meaning "this marker/component is
+# not present". Shared by two pipeline stages that must agree on it: the scraper
+# (acquire/scrape.py, merging repeated columns) and the loader (db/build.py,
+# binarizing a cell to `present`). It lives here rather than in either one
+# because a stage-01 constant imported by stage 00 would invert the pipeline's
+# dependency direction, and a second copy would drift.
+ABSENT_TOKENS = {"no", "none", "na", "", "-", "?"}
+
+
+
+# --------------------------------------------------------------------------
 # prokaryomics.com
 # --------------------------------------------------------------------------
 # The site is live at UC Davis (128.120.136.57) but its TLS certificate has
@@ -111,6 +124,21 @@ PROK_EXPECTED = {
     "reaction": 115,
     "fluxome": 43,
     "phenome": 253,
+}
+
+# Columns per record, AFTER acquire/scrape.py:merge_duplicate_columns. Record
+# counts alone were the only shape assertion here for a long time, and they are
+# the axis nothing went wrong on: the strain endpoint lost three columns to a
+# repeated-key collapse while still returning exactly 65 records. A width is as
+# much a part of the contract as a length.
+PROK_EXPECTED_COLUMNS = {
+    "strain": 156,      # 4 meta + 152 genotype features (159 raw positions,
+                        # three of them repeats -- see merge_duplicate_columns)
+    "medium": 126,      # 6 meta + 120 composition features
+    "molecule": 3,
+    "reaction": 3,
+    "fluxome": 125,     # 5 meta + 120 reactions R0001..R0120
+    "phenome": 8,
 }
 
 # --------------------------------------------------------------------------
@@ -162,16 +190,29 @@ REMOTE_FILES = {
     "supplementary_zip": SUPP_DIR / "europepmc_supplementary.zip",
 }
 
-# Files extracted from `supplementary_zip`, by what they actually contain. The
-# PMC listing mislabels these by one -- it calls ncomms13090-s2.xlsx
-# "Supplementary Data 1" but also calls s4.xlsx "Data 3" when its own header
-# says otherwise -- so these names come from each file's first cell.
+# Files extracted from `supplementary_zip`. The ZIP names them s1..s10 by
+# position; each xlsx also states its own identity in its first cell, and the
+# two agree on a clean offset -- sN.xlsx IS "Supplementary Data N-1", for all
+# eight, with s1 the Methods PDF and s10 the peer-review file:
+#
+#   s2 Data 1 metadata      s4 Data 3 new functional terms  s6 Data 5 growth
+#   s3 Data 2 interactions  s5 Data 4 FBA reaction bounds   s7 Data 6 stress pairs
+#                                                           s8 Data 7 growth molecules
+#                                                           s9 Data 8 per-group PCC
+#
+# The journal's LANDING PAGE disagrees, and it is the one that is wrong: its
+# eight captions are permuted relative to its own download links (the byte sizes
+# it lists -- 812/12674/112/12/79/175/61/84 kB -- match s2..s9 in order, so the
+# links are fine and the captions are not). Read that page and you conclude the
+# metadata file is "Data 6" and the FBA bounds are "Data 8". Each file's own
+# first cell is authoritative; check a citation against that, not the listing.
 SUPPLEMENTARY = {
     "methods_pdf": SUPP_DIR / "ncomms13090-s1.pdf",        # Figs 1-28, Tables, METHODS
     "metadata": SUPP_DIR / "ncomms13090-s2.xlsx",          # Data 1: compendium meta-data
     "interactions": SUPP_DIR / "ncomms13090-s3.xlsx",      # Data 2: molecular interactions
     "fba_bounds": SUPP_DIR / "ncomms13090-s5.xlsx",        # Data 4: FBA reaction bounds
     "growth": SUPP_DIR / "ncomms13090-s6.xlsx",            # Data 5: growth dynamics
+    "growth_molecules": SUPP_DIR / "ncomms13090-s8.xlsx",  # Data 7: growth-predictive molecules
     "group_pcc": SUPP_DIR / "ncomms13090-s9.xlsx",         # Data 8: per-GO-group MOMA PCC
     "peer_review": SUPP_DIR / "ncomms13090-s10.pdf",
 }

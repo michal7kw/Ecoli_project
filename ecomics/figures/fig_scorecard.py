@@ -84,14 +84,14 @@ CLAIMS = [
     # transcriptome_predictions.npz, written by scripts/07 --refit). Still above
     # the paper's 0.54, so the verdict holds.
     Claim("Transcriptome PCC on the paper's own protocol", "good",
-          "0.544", "0.54 ± 0.15",
-          "methods_faithful_eval", ("ours", "MOMA", "pcc"), 0.5436),
+          "0.558", "0.54 ± 0.15",
+          "methods_faithful_eval", ("ours", "MOMA", "pcc"), 0.5584),
     # 0.607 -> 0.576 at 603 features. It now sits just BELOW the
     # paper's ~0.59 rather than just above -- close, but no longer a match, so
     # this drops from "good" to "warning" (= partial).
     Claim("Growth rate from the input layer alone", "warning",
-          "0.576", "~0.59",
-          "five_layer_phenome", ("combos", 0, "pcc"), 0.5758),
+          "0.573", "~0.59",
+          "five_layer_phenome", ("combos", 0, "pcc"), 0.5732),
     Claim("Neighbours beat own-mRNA (proteome), at every penalty", "good",
           "1.54×–2.66×", "reported",
           "alpha_sensitivity", ("verdict", "ensemble_beats_own_mrna_at_every_alpha"),

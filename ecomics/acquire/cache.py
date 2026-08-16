@@ -159,8 +159,12 @@ def save_json(obj: Any, dest: Path) -> Path:
     return dest
 
 
-def load_json(path: Path) -> Any:
-    return json.loads(Path(path).read_text(encoding="utf-8", errors="replace"))
+def load_json(path: Path, *, object_pairs_hook: Any = None) -> Any:
+    """Parse a JSON artefact. `object_pairs_hook` is forwarded to `json.loads`,
+    which is the only place a repeated key is still visible — see
+    `acquire/scrape.py:merge_duplicate_columns`."""
+    return json.loads(Path(path).read_text(encoding="utf-8", errors="replace"),
+                      object_pairs_hook=object_pairs_hook)
 
 
 def gunzip(src: Path, dest: Path | None = None) -> Path:
