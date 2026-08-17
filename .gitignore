@@ -29,3 +29,17 @@ offical-notes/
 results/figures/
 docs/
 *_original*
+
+# The figure atlas is PUBLISHED as code (2026-08-17): ecomics/plots.py holds the
+# house style, ecomics/figures/ the builders, scripts/15_figures.py the driver.
+# The three travel together -- 15_figures.py is the package's only consumer, and
+# publishing the script without the package would ship an ImportError on
+# `from ecomics import figures`.
+#
+# Its OUTPUT is not published: `results/figures/` and `results/*.png` above stay
+# ignored, so a reader renders their own from the committed results/*.json rather
+# than reading a PNG that a later run has silently outdated. `15_figures.py`
+# computes nothing, so the renders are always regenerable.
+#
+# THIS FILE IS THIS REPOSITORY'S SCOPE STATEMENT. Adding or removing a line here
+# publishes or unpublishes code; it is not housekeeping.

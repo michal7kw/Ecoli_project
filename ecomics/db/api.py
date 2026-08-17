@@ -5,7 +5,7 @@ Two access paths, deliberately:
   * SQLite (`Ecomics.conn`) for provenance, integrity and ad-hoc questions
     -- "which conditions perturb b2741?", "what is in medium MD066?"
   * Parquet (`Ecomics.matrix`) for the wide numeric matrices the model trains
-    on, because pulling 14.6 M rows out of the `measurement` table every time
+    on, because pulling 14.68 M rows out of the `measurement` table every time
     would dominate runtime.
 
 Both are views of the same build; db/build.py writes them together.

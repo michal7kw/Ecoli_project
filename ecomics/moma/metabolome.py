@@ -46,7 +46,7 @@ def load_substrate_enzyme(path=None) -> dict[str, list[str]]:
     metabolite KEGG id -- and it is what the Methods mean by "metabolites having
     known enzyme-substrate relations". Returns {metabolite: [enzyme b-numbers]}.
 
-    ⚠ Measure its reach before relying on it: **552 pairs over 317 enzymes but
+    ⚠ Measure its reach before relying on it: **506 pairs over 317 enzymes but
     only 27 metabolites**, of which **3** appear among the 114 metabolites the
     public release actually ships. So this restricts three regressions and
     leaves 111 to L1, which is a fact about the released table rather than
@@ -93,7 +93,7 @@ def load_metabolite_enzymes(path=None) -> dict[str, list[str]]:
     duplicates (ATP names ~100 entries, several twice). Deduplicated and
     intersected with the proteome's 589 measured proteins it leaves a **median
     of 4** enzymes per metabolite -- against 589 columns unrestricted -- and it
-    covers **all 10** of the core metabolites the released table contains.
+    covers **all 12** of the core metabolites the released table contains.
 
     That is what §3.3.5's "metabolites having known enzyme-substrate relations"
     can actually reach here, so this is the map to pass to
@@ -363,23 +363,38 @@ class MetabolomeModule:
 # metabolism" the paper distinguishes -- densely measured, high variance across
 # conditions, and predicted from proteins rather than transcripts.
 #
-# ⚠ THIS RECOVERS 10 CORE METABOLITES OF THE PUBLISHED 114; the paper's core set
-# is 126 of 356. So "core from protein, 0.420 against the paper's 0.65" compares
-# a 10-metabolite mean against a 126-metabolite one, and `scripts/04` prints the
-# two side by side. They are not the same quantity, and the 12x difference in
+# ⚠ THIS RECOVERS 12 CORE METABOLITES OF THE PUBLISHED 114; the paper's core set
+# is 126 of 356. So "core from protein" against the paper's 0.65 compares a
+# 12-metabolite mean against a 126-metabolite one, and `scripts/04` prints the
+# two side by side. They are not the same quantity, and the 10x difference in
 # set size is a larger caveat than the PCC gap itself.
 #
 # The list is hand-built from pathway membership because the paper does not
-# publish its split. Supplementary Data 2's "substrate-enzyme" sheet is already
-# downloaded and already read by `scripts/09`, and would give the authors' own
-# set -- that is the way to close this, and it has not been done.
+# publish its split, and NO supplementary sheet supplies it -- an earlier version
+# of this comment proposed Data 2's "substrate-enzyme" sheet as the way to close
+# it, which `load_substrate_enzyme` had already refuted: that sheet names 27
+# metabolites, not 126, only 5 of the ids here are in it, and the set is not a
+# subset of it or of Data 1 or of their union. 14 ids here appear in neither
+# sheet nor the released table, which is what a hand-built list looks like.
+#
+# ✓ Verified against rest.kegg.jp on 2026-08-17, in both directions: all ids
+# resolve to real compounds, each sits in the map it is filed under, and no
+# released metabolite that KEGG places in map00010/00020/00030 is missing. The
+# reverse direction is the one that found anything -- an omission is invisible
+# from the forward check, and a hand-built list fails by omission.
 CORE_KEGG_IDS = {
-    # glycolysis / gluconeogenesis
-    "C00031", "C00668", "C00085", "C05345", "C05378", "C00111", "C00118",
-    "C00236", "C00197", "C00631", "C00074", "C00022", "C00186", "C00033",
-    # pentose phosphate
-    "C01236", "C00345", "C00199", "C00117", "C00231", "C00279", "C00447",
-    "C05382", "C00085",
+    # glycolysis / gluconeogenesis. Hexose phosphates appear as the generic id
+    # AND the beta anomer: KEGG annotates pathways only on the generic entry
+    # (C05345 and C05378 carry none), so a table using either id must resolve.
+    "C00031", "C00668", "C00085", "C05345", "C00354", "C05378", "C00111",
+    "C00118", "C00236", "C00197", "C00631", "C00074", "C00022", "C00186",
+    "C00033",
+    # pentose phosphate, INCLUDING the Entner-Doudoroff branch: KEGG files
+    # C00257 and C04442 under map00030 and E. coli runs edd/eda, so they
+    # continue the C01236 -> C00345 steps already here rather than extending
+    # scope. Both are in the released 114 -- see the note below on the count.
+    "C01236", "C00345", "C00199", "C00117", "C00231", "C00279", "C05382",
+    "C00257", "C04442", "C00085",
     # TCA cycle
     "C00024", "C00036", "C00158", "C00417", "C00311", "C00026", "C00091",
     "C00042", "C00122", "C00149",

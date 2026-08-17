@@ -32,7 +32,7 @@ paper's 0.55 invites a comparison the sample size cannot support. Those cells no
 | proteome | PCC, ensemble | n/a (5 cond) | 0.55 +/- 0.26 | 589 averaged proteins, not 1,001 individual profiles |
 | proteome | coverage | 588/589 | 1001/1001 | union of 6 networks (the paper's own, Supplementary Data 2) |
 | proteome | PCC, own-mRNA baseline | n/a (5 cond) | 0.34 +/- 0.18 | |
-| metabolome | PCC, core from protein | 0.360 | 0.65 +/- 0.21 | 25 shared conditions |
+| metabolome | PCC, core from protein | 0.399 | 0.65 +/- 0.21 | 25 shared conditions |
 | metabolome | PCC, non-core from transcript | n/a (6 cond) | 0.87 +/- 0.15 | only 6 shared conditions |
 | phenome | PCC, consensus | 0.607 | 0.65 +/- 0.01 | 179 conditions with growth; the paper CV'd over 101 |
 | phenome | PCC, input layer only | 0.622 | ~0.59 | |
@@ -41,13 +41,10 @@ paper's 0.55 invites a comparison the sample size cannot support. Those cells no
 
 **Reproduced.**
 
+- **Core metabolome from proteins**: 0.453 +/- 0.315 per PROFILE against the paper's 0.65 +/- 0.21 -- within one standard deviation. Per MOLECULE it is 0.399, on 25 conditions, which is too few for that axis to mean much. The two are not the same measurement and are not comparable to each other.
 - **The proteome coverage argument**: no single network covers every protein, the union does (588/589 here; 1001/1001 in the paper, against the unpublished per-profile table).
 - **The paper's central proteome claim** -- a protein is better predicted from its functional NEIGHBOURS than from its OWN mRNA. Per profile 0.264 vs 0.086 (3.1x): the direction holds.
 - **Every cross-layer condition count** matches the paper exactly, including 179 conditions / 1,991 transcriptome profiles with growth data.
-
-**Did not reproduce.**
-
-- **Core metabolome from proteins**: 0.420 +/- 0.390 per PROFILE against the paper's 0.65 +/- 0.21 -- OUTSIDE one standard deviation. Per MOLECULE it is 0.360, on 25 conditions, which is too few for that axis to mean much. The two are not the same measurement and are not comparable to each other.
 
 **The transcriptome, and which axis it is read on.**
 

@@ -34,7 +34,7 @@ def _proteome_arms(d: dict) -> list[str]:
     """Arm names in `all_layers.json` order, ENSEMBLE last.
 
     Read from the file rather than hard-coded: the arm SET changed on
-    when the layer moved to Supplementary Data 2's graphs, which
+    2026-08-12 when the layer moved to Supplementary Data 2's graphs, which
     added `SIGMA` and `SRNA`. A hard-coded list would have kept rendering the
     old five and silently dropped the two new ones — the exact failure the
     `requires` declaration exists to prevent one level up.
@@ -155,7 +155,7 @@ def paper_networks(theme=P.LIGHT):
 
     # -- A: the three rungs, with the attribution between them
     ax = axes[0]
-    # The first rung is HISTORY: its loaders are gone, so the
+    # The first rung is HISTORY: its code was deleted on 2026-08-12, so the
     # value is read from the `retired_rung` block the script records rather than
     # recomputed. Drawn in the muted "not comparable" neutral, and labelled as
     # retired, so nobody reads three live measurements off this panel.
@@ -323,8 +323,9 @@ _META_ROWS = [
     group="layers",
     requires=("results/all_layers.json",),
     tier=1,
-    caveat="core-from-transcript is NaN, not zero: with 6 conditions and 10 "
-           "core metabolites, too few have non-zero variance to correlate.",
+    caveat="core-from-transcript is NaN BY CONSTRUCTION, not from low variance: "
+           "scripts/04 passes proteins=None on this join, so the core branch of "
+           "MetabolomeModule.fit never runs. All 72 values are finite.",
 )
 def metabolome_layers(theme=P.LIGHT):
     d = results_json("all_layers")["metabolome"]
@@ -332,7 +333,7 @@ def metabolome_layers(theme=P.LIGHT):
     fig, ax = P.panels(
         figsize=(8.4, 4.8), theme=theme,
         title="Predicting metabolites from proteins and from transcripts",
-        subtitle="10 core and 104 non-core metabolites are present in the "
+        subtitle="12 core and 102 non-core metabolites are present in the "
                  "published 114. The per-profile axis is the interpretable one "
                  "at this sample size.")
 
@@ -350,7 +351,7 @@ def metabolome_layers(theme=P.LIGHT):
         n = m["n_conditions_available"]
         if v != v:
             P.not_applicable(ax, x, n, theme=theme, y=0.12)
-            ax.text(x, 0.10, "NaN: too few metabolites\nwith non-zero variance",
+            ax.text(x, 0.10, "NaN: core branch never fitted\n(proteins=None on this join)",
                     ha="center", va="top", fontsize=6.5, color=theme.muted)
         else:
             ax.text(x, v, f"{v:.3f}", ha="center", va="bottom", fontsize=8,
@@ -416,7 +417,7 @@ def fluxome(theme=P.LIGHT):
     # The baseline is the whole panel. FBA needs no training data, so this layer
     # never enters `run_loco` and never inherited the three baselines from it --
     # they arrived separately, via `evaluate.out_of_fold_baselines`, on
-    # Until they were drawn this panel showed 0.843 under the
+    # 2026-08-13. Until they were drawn this panel showed 0.843 under the
     # heading "what is measurable" with nothing to read it against, and a
     # caption calling the magnitudes "broadly right". They are: every profile
     # has the same broadly-right magnitudes, which is why a CONSTANT scores

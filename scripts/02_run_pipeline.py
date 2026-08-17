@@ -56,10 +56,10 @@ _CHECK_SPEC = {
 def write_validation_json(res, crosschecks: dict, hl: dict) -> Path:
     """Serialize what this run measured, so the figure atlas can plot it.
 
-    Without this the numbers exist only in `16-results-reference.md` prose and
-    in a gitignored log, which means `scripts/15_figures.py` would have to
-    hard-code them -- exactly what "a number needs a provenance" forbids. The
-    values are not recomputed here; they are the ones printed above.
+    Without this the numbers exist only in prose and in a gitignored log, which
+    means `scripts/15_figures.py` would have to hard-code them -- exactly what
+    "a number needs a provenance" forbids. The values are not recomputed here;
+    they are the ones printed above.
     """
     cascade = []
     for label, attr in _CASCADE:

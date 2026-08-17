@@ -43,10 +43,12 @@ Then check the **build tag**, not the version — it must read `+cu130`.
 | **03** | `python scripts/03_train_moma.py --device cuda` | `results/transcriptome_loco.json` + prediction cache |
 | **04** | `python scripts/04_reproduce.py`                | `results/all_layers.json` + `results/reproduction_table.md` |
 | **08** | `python scripts/08_methods_faithful_eval.py`    | `results/methods_faithful_eval.json`                 |
-| **15** | `python scripts/15_figures.py`                  | `results/figures/*.png`                              |
+| **15** | `python scripts/15_figures.py`                  | `results/figures/*.png` (untracked — see below)      |
 | **17** | `python scripts/17_paper_networks_proteome.py`  | `results/paper_networks_proteome.json`               |
 
-`00` and `01` are prerequisites for everything. After that, `02`, `03 → 08`, `04` and `17` are independent of one another. `08` refits nothing — it re-scores the out-of-fold predictions `03` cached, under the paper's protocol, so it costs seconds. `15` computes nothing at all: it reads the results of record and renders them, and is safe to re-run at any time.
+`00` and `01` are prerequisites for everything. After that, `02`, `03 → 08`, `04`, `15` and `17` are independent of one another. `08` refits nothing — it re-scores the out-of-fold predictions `03` cached, under the paper's protocol, so it costs seconds.
+
+**`15` computes nothing at all** — it reads the results of record and renders them, so it is safe to re-run at any time and needs only `matplotlib`. The rendered PNGs are deliberately **not** committed: a figure is a view of `results/*.json`, and a committed one goes stale the moment a result moves, without anything failing. Render your own after `04`. Use `--list` to see the available figures and what each is missing, and `--dark` for the dark palette.
 
 **`04` is the five-layer driver.** It evaluates the proteome, metabolome, fluxome and phenome, reads the transcriptome result that `03` wrote, and assembles `results/reproduction_table.md`. It does **not** train the transcriptome - that is `03`. Pass `--all` to turn a missing transcriptome result from a warning into an error, so the table cannot silently ship without those rows.
 

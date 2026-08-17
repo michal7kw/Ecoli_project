@@ -1,17 +1,16 @@
 """E — The scorecard: what reproduced, at a glance, without drifting.
 
-This repository catalogues a failure mode that has recurred throughout this
-repository in one specific shape: *"the prose gets maintained; the indexes do
-not."* A mermaid node, a table row, a summary bullet — each has at some point
-asserted the opposite of the text beside it, and neither `tools/verify_docs.py`
-(links and quotations) nor the reported-figure tests (values still
-present) can catch it.
+This repository catalogues a failure mode that has recurred throughout it in one
+specific shape: *"the prose gets maintained; the indexes do not."* A mermaid
+node, a table row, a summary bullet — each has at some point asserted the
+opposite of the text beside it, and neither a link-and-quotation checker nor a
+test pinning values that are still present can catch it.
 
 A summary FIGURE is exactly an index, and would be the most drift-prone artefact
 in the atlas. So each claim below carries the JSON path that backs it and the
-value it asserts, and a dedicated test
-navigates every path and compares. Re-running a script that moves a number
-turns this file red rather than leaving it quietly wrong.
+value it asserts, and a dedicated test navigates every path and compares.
+Re-running a script that moves a number turns this file red rather than leaving
+it quietly wrong.
 
 Statuses map to the four ways a discrepancy can resolve, because they
 demand different responses:
@@ -79,29 +78,40 @@ CLAIMS = [
     Claim("Proteome coverage by union of four networks", "good",
           "588 / 589", "1001 / 1001",
           "all_layers", ("proteome", "ENSEMBLE", "coverage"), 588),
-    # 0.578 -> 0.560: the cached predictions behind it were
-    # 756-era and re-running scripts/03 does NOT refresh them (scripts/08 reads
-    # transcriptome_predictions.npz, written by scripts/07 --refit). Still above
-    # the paper's 0.54, so the verdict holds.
+    # 0.578 -> 0.560 on 2026-08-12: the cached predictions behind it were
+    # 756-era. 0.5436 -> 0.5584 on 2026-08-16, when the strain fix restored six
+    # genotype cells a repeated JSON column had swallowed. Both moves were
+    # caught by the figure guard rather than noticed, which is what it is for.
     Claim("Transcriptome PCC on the paper's own protocol", "good",
           "0.558", "0.54 ± 0.15",
           "methods_faithful_eval", ("ours", "MOMA", "pcc"), 0.5584),
-    # 0.607 -> 0.576 at 603 features. It now sits just BELOW the
-    # paper's ~0.59 rather than just above -- close, but no longer a match, so
-    # this drops from "good" to "warning" (= partial).
+    # 0.607 -> 0.576 at 603 features (2026-08-11), then -> 0.573 on 2026-08-16
+    # with the strain fix. It sits just BELOW the paper's ~0.59 rather than just
+    # above -- close, but no longer a match, so this stays "warning" (= partial).
+    # Note the direction: the strain fix helped the transcriptome and cost this
+    # layer 0.003, so it is not a uniform improvement.
     Claim("Growth rate from the input layer alone", "warning",
           "0.573", "~0.59",
           "five_layer_phenome", ("combos", 0, "pcc"), 0.5732),
+    # 1.54x-2.66x was the SCRAPED-graph sweep. On the paper's Data 2 graphs the
+    # same sweep is 3.05x-3.23x -- a range of 0.18 where it was 1.1, so the
+    # factor went from "not robust" to robust. The label went stale for a year
+    # because the checked value here is a BOOLEAN: `beats at every alpha` is
+    # true on either set of graphs, so nothing failed. See the caveat below.
     Claim("Neighbours beat own-mRNA (proteome), at every penalty", "good",
-          "1.54×–2.66×", "reported",
+          "3.05×–3.23×", "reported",
           "alpha_sensitivity", ("verdict", "ensemble_beats_own_mrna_at_every_alpha"),
           True),
     Claim("Recurrent term is live (|w_y| free of weight decay)", "good",
           "2.4e-02", "—",
           "recurrence_experiment", ("arms", 1, "w_y"), 0.023909, tol=1e-5),
+    # 0.0382 -> 0.0342 with the 2026-08-16 strain fix. ⚠ This claim did NOT
+    # fail when it moved: |0.0342 - 0.0382| = 0.0040 against tol=5e-3, so it
+    # passed with 0.001 to spare while displaying a stale label. The tolerance
+    # was wider than the drift it was meant to catch. Tightened to 1e-3.
     Claim("Prospective knockout improvement, non-specific init", "warning",
-          "+3.8%", "+27%",
-          "prospective_ko", ("non_specific", "gain_vs_baseline"), 0.0382, tol=5e-3),
+          "+3.4%", "+27%",
+          "prospective_ko", ("non_specific", "gain_vs_baseline"), 0.0342, tol=1e-3),
     Claim("Transcription-factor advantage over all genes", "warning",
           "+0.003", "+0.14",
           "methods_faithful_eval", ("tf_above_all_genes",), True),
@@ -112,15 +122,23 @@ CLAIMS = [
     Claim("Fluxome per-reaction PCC (Fig. 5e)", "serious",
           "undefined", "0.72 ± 0.24",
           "all_layers", ("fluxome", "plain FBA", "pcc_mean"), None),
+    # "keeps rising past 2" was true of the curve as it stood when this row was
+    # written. It is not true of the re-swept one: the maximum is at depth 5
+    # (0.2461) and the curve FALLS to 0.1748 by 6 and 0.1818 by 8. The check
+    # below is on depth_4, which moved only 0.2270 -> 0.2276, so again nothing
+    # failed while the label said something the data no longer supports.
     Claim("Memory depth optimum", "critical",
-          "keeps rising past 2", "2",
-          "depth_sweep_loco", ("depth_4", "all_genes", "pcc_mean"), 0.2270, tol=5e-3),
+          "knee at 2, max at 5", "2",
+          "depth_sweep_loco", ("depth_5", "all_genes", "pcc_mean"), 0.2461, tol=1e-3),
     # Still critical -- the curve is not monotone -- but the step that breaks it
     # MOVED at 603 features: the transcriptome went -0.087 to +0.019 and the
     # metabolome now costs 0.051. The verdict survives, its mechanism did not.
+    # ⚠ Same masked-drift pattern as the prospective row: the curve moved to
+    # 0.573/0.600/0.666/0.614 with the strain fix and |0.5997 - 0.5952| = 0.0045
+    # cleared tol=5e-3 by 0.0005. Tightened to 1e-3.
     Claim("Fig. 5g additivity (each layer helps)", "critical",
-          "0.576→0.595→0.663→0.612", "monotone",
-          "five_layer_phenome", ("combos", 5, "pcc"), 0.5952, tol=5e-3),
+          "0.573→0.600→0.666→0.614", "monotone",
+          "five_layer_phenome", ("combos", 5, "pcc"), 0.5997, tol=1e-3),
     Claim("The paper's baselines, on its own protocol", "critical",
           "0.528 / 0.529 / 0.514", "0.25 / 0.26 / 0.36",
           "methods_faithful_eval", ("ours", "random", "pcc"), 0.5284),
@@ -137,9 +155,11 @@ CLAIMS = [
               "results/recurrence_experiment.json",
               "results/prospective_ko.json", "results/depth_sweep_loco.json"),
     tier=1,
-    caveat="Every row's value is checked against the JSON path it cites by "
-           "the figure tests, so this figure cannot drift from the results "
-           "the way a hand-written summary would.",
+    caveat="Each row's CHECKED value is verified against the JSON path it "
+           "cites by the figure tests. Note the limit: the displayed label "
+           "and the checked value are separate fields, so a row checking a "
+           "boolean, or a neighbouring quantity, can show a stale figure and "
+           "still pass. Two did until recently.",
 )
 def reproduction_scorecard(theme=P.LIGHT):
     n = len(CLAIMS)
